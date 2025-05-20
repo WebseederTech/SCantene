@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* body {
+  background: #0f0f10;
+  color: #fff;
+} */
+
+.font-exo {
+  font-family: 'Exo', sans-serif;
+}
+
+
+input,
+textarea {
+  color: #000;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Edge */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge, and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+body {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.light {
+  background-color: white;
+  color: black;
+}
+
+.dark {
+  background-color: black;
+  color: white;
+}
+
+.darktheme {
+  @apply dark:bg-black bg-white text-black dark:text-white;
+}
+
+.darkthemeinput {
+  @apply text-black bg-white dark:bg-gray-900 dark:text-white;
+}
+
+.darklabel {
+  @apply dark:text-gray-300 text-black;
+}
+
+.pagination {
+  @apply dark:bg-gray-700 bg-gray-200 text-black dark:text-white dark:disabled:bg-gray-600 disabled:bg-gray-300;
+}
+
+.tableheading {
+  @apply bg-gray-800 text-white whitespace-nowrap;
+}
+
+.inputbg {
+  @apply dark:bg-gray-800 bg-white;
+}
+
+.tablecontent {
+  @apply text-black bg-gray-200 whitespace-nowrap;
+}
+
+.bgform {
+  @apply dark:bg-black bg-[#f0f0f0];
+}
+
+.adminmenu {
+  @apply dark:bg-gray-200 bg-black;
+}
+
+.menu {
+  @apply dark:bg-[#151515] bg-gray-200;
+}
+
+.hovereffect {
+  @apply dark:hover:bg-[#2E2D2D] hover:bg-gray-100;
+}
+
+.textcolor {
+  @apply dark:text-white text-black;
+}
+
+.cardbg {
+  @apply dark:bg-[#1A1A1A] bg-gray-300;
+}
