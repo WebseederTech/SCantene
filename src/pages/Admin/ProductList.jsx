@@ -846,6 +846,7 @@ import { useSelector } from "react-redux";
 import { BASE_URL } from "../../redux/constants";
 import { io } from "socket.io-client";
 import CouponSelector from "./CouponSelector";
+import { useFetchSubCategoriesQuery } from "../../redux/api/subCategoryApiSlice";
 
 const ProductList = () => {
   const [formData, setFormData] = useState({
@@ -854,6 +855,7 @@ const ProductList = () => {
     mrp: "",
     offerPrice: "",
     category: "",
+    subCategory:"",
     brand: "",
     stock: "",
     aboutTheBrand: "",
@@ -880,6 +882,7 @@ const ProductList = () => {
   const [uploadProductImage] = useUploadProductImageMutation();
   const [createProduct] = useCreateProductMutation();
   const { data: categories } = useFetchCategoriesQuery();
+  const { data: subCategories = [] } = useFetchSubCategoriesQuery();
   const { data: brands } = useFetchBrandsQuery();
   const { data: coupons } = useGetCouponCodeQuery();
 
@@ -951,6 +954,7 @@ const ProductList = () => {
       productData.append("mrp", formData.mrp);
       productData.append("offerPrice", formData.offerPrice);
       productData.append("category", formData.category);
+      productData.append("subCategory", formData.subCategory);
       productData.append("brand", formData.brand);
       productData.append("countInStock", formData.stock);
       productData.append("aboutTheBrand", formData.aboutTheBrand);
@@ -1062,7 +1066,25 @@ const ProductList = () => {
           category: "",
         }));
       }
-    } else {
+    }
+     else if (name === "subCategory") {
+      const selectedSubCategory = subCategories?.find((cate) => cate._id === value);
+      if (!selectedSubCategory) {
+        setErrors((prev) => ({
+          ...prev,
+          subCategory: "Sub-Category is required",
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          subCategory: selectedSubCategory._id,
+        }));
+        setErrors((prev) => ({
+          ...prev,
+          subCategory: "",
+        }));
+      }
+    }  else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -1123,6 +1145,8 @@ const ProductList = () => {
       newErrors.offerPrice = "Valid Offer Price is required";
     if (!formData.category)
       newErrors.category = "Category selection is required";
+        if (!formData.subCategory)
+      newErrors.subCategory = "Sub-Category selection is required";
     if (!formData.stock || isNaN(formData.stock) || Number(formData.stock) < 0)
       newErrors.stock = "Stock must be a non-negative number";
     if (
@@ -1333,6 +1357,29 @@ const ProductList = () => {
                       </select>
                       {errors.category && (
                         <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                      )}
+                    </div>
+
+                      <div>
+                      <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                       Sub-Category
+                      </label>
+                      <select
+                        id="subCategory"
+                        name="subCategory"
+                        value={formData.subCategory}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Select Sub-Category</option>
+                        {subCategories?.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.subCategory && (
+                        <p className="mt-1 text-sm text-red-600">{errors.subCategory}</p>
                       )}
                     </div>
 
@@ -1602,7 +1649,15 @@ const ProductList = () => {
                         </label>
                         <input
                           type="date"
-                          value={slab.expire ? slab.expire.split("T")[0] : ""}
+                         value={
+  slab.expire
+    ? (() => {
+        const parts = slab.expire.split("-");
+        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : "";
+      })()
+    : ""
+}
+
                           onChange={(e) => handleSlabChange(index, "expire", e.target.value)}
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         />
