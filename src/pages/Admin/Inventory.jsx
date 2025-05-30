@@ -716,6 +716,7 @@ const Inventory = () => {
                       setIsLoader={setIsLoader}
                       brandList={brandList}
                       categoryList={categoryList}
+                      subCategories={subCategories}
                     />
                   </div>
                 </div>

@@ -72,6 +72,7 @@ const AdminProductUpdate = () => {
       setMrp(productData.mrp);
       setOfferPrice(productData.offerPrice);
       setCategory(productData.category);
+      setSubCategory(productData.subCategory);
       setBrand(productData.brand?._id);
       setCountInStock(productData.countInStock);
       setLowStockThreshold(productData.lowStockThreshold || 0);
