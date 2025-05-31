@@ -279,6 +279,7 @@ const AllProducts = () => {
   } = useAllProductsQuery({ page: currentPage, limit });
   const { userInfo } = useSelector((state) => state.auth);
 
+  
   // State for filters
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -290,49 +291,40 @@ const AllProducts = () => {
   useEffect(() => {
     refetch();
   }, [currentPage, refetch]);
+const handleDateFilter = () => {
+  if (!products?.data) return { data: [], pagination: { totalPages: 1 } };
 
-  const handleDateFilter = () => {
-    if (!products?.data) return { data: [], pagination: { totalPages: 1 } };
-    
-    let filtered = [...products.data];
+  let filtered = [...products.data];
 
-    // Filter by product name
-    if (productSearch) {
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(productSearch.toLowerCase())
-      );
-    }
+  // Apply filters on current page data only
+  if (productSearch) {
+    filtered = filtered.filter(product => 
+      product.name.toLowerCase().includes(productSearch.toLowerCase())
+    );
+  }
+  if (startDate && endDate) {
+    filtered = filtered.filter(product => {
+      const createdDate = moment(product.createdAt);
+      return createdDate.isBetween(startDate, endDate, undefined, "[]");
+    });
+  }
+  if (sellerSearch) {
+    filtered = filtered.filter(product =>
+      product.createdBy?.username?.toLowerCase().includes(sellerSearch.toLowerCase())
+    );
+  }
+  if (sellerCity) {
+    filtered = filtered.filter(product =>
+      product.createdBy?.city?.toLowerCase().includes(sellerCity.toLowerCase())
+    );
+  }
 
-    // Filter by date range
-    if (startDate && endDate) {
-      filtered = filtered.filter(product => {
-        const createdDate = moment(product.createdAt);
-        return createdDate.isBetween(startDate, endDate, undefined, "[]");
-      });
-    }
-
-    // Filter by seller name
-    if (sellerSearch) {
-      filtered = filtered.filter(product =>
-        product.createdBy?.username?.toLowerCase().includes(sellerSearch.toLowerCase())
-      );
-    }
-
-    // Filter by seller city
-    if (sellerCity) {
-      filtered = filtered.filter(product =>
-        product.createdBy?.city?.toLowerCase().includes(sellerCity.toLowerCase())
-      );
-    }
-
-    return {
-      data: filtered,
-      pagination: {
-        ...products.pagination,
-        totalPages: Math.ceil(filtered.length / limit) || 1
-      }
-    };
+  // **Do not modify totalPages here, keep it from backend**
+  return {
+    data: filtered,
+    pagination: products.pagination
   };
+};
 
   const filteredProducts = handleDateFilter();
 
@@ -541,7 +533,8 @@ const AllProducts = () => {
                   >
                     <FaChevronLeft size={14} />
                   </button>
-                  
+                  {console.log("totalPages",filteredProducts.pagination)}
+                    
                   <div className="flex items-center space-x-1">
                     {Array.from(
                       { length: filteredProducts.pagination.totalPages > 5 ? 5 : filteredProducts.pagination.totalPages },
@@ -574,7 +567,7 @@ const AllProducts = () => {
                           </button>
                         );
                       }
-                    )}
+                    )} {console.log("totalPages",filteredProducts.pagination)}
                     
                     {filteredProducts.pagination.totalPages > 5 && currentPage < filteredProducts.pagination.totalPages - 2 && (
                       <>

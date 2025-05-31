@@ -4,6 +4,8 @@ import { SUBCATEGORY_URL } from "../constants";
 
 export const subCategoryApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+
+
     createSubCategory: builder.mutation({
       query: (newSubCategory) => ({
         url: `${SUBCATEGORY_URL}/addSubCategory`,
@@ -22,13 +24,13 @@ export const subCategoryApiSlice = apiSlice.injectEndpoints({
 
     deleteSubCategory: builder.mutation({
       query: (subCategoryId) => ({
-        url: `${SUBCATEGORY_URL}/${subCategoryId}`,
+        url: `${SUBCATEGORY_URL}/deleteSubCategoryById/${subCategoryId}`,
         method: "DELETE",
       }),
     }),
 
     fetchSubCategories: builder.query({
-      query: () => `${SUBCATEGORY_URL}/subCategoriesList`,
+      query: () => `${SUBCATEGORY_URL}/getAllsubCategoriesList`,
     }),
   }),
 });

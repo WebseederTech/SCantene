@@ -310,7 +310,7 @@ const CategoryList = () => {
         setModalVisible(false);
       }
     } catch (error) {
-      console.error(error);
+      console.error(error.message);
       toast.error("Category deletion failed. Try again.");
     }
   };
