@@ -11,6 +11,7 @@ import CategoryForm from "../../components/CategoryForm";
 import Modal from "../../components/Modal";
 import AdminMenu from "./AdminMenu";
 import { useSelector } from "react-redux";
+import { BASE_URL } from "../../redux/constants";
 
 // const CategoryList = () => {
 //   const { data: fetchedCategories } = useFetchCategoriesQuery();
@@ -375,14 +376,14 @@ const CategoryList = () => {
                           setModalVisible(true);
                           setSelectedCategory(category);
                           setUpdatingName(category.name);
-                          setUpdatingImage(null);
+                          setUpdatingImage(category.image);
                           setUpdatingKeywords(category.keywords || "");
                         }}
                         className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition flex flex-col items-center justify-center text-center gap-2"
                       >
-                        {/* {category.image ? (
+                        {category.image ? (
                           <img
-                            src={category.image}
+                            src={`${BASE_URL}/${category.image}`}
                             alt={category.name}
                             className="w-16 h-16 object-cover rounded-full border-2 border-gray-200 dark:border-gray-700"
                           />
@@ -390,8 +391,8 @@ const CategoryList = () => {
                           <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
                             <Tag size={24} className="text-gray-400" />
                           </div>
-                        )} */}
-                        <span className="font-medium text-gray-800 dark:text-white">
+                        )}
+                        <span className="font-bold text-gray-800 dark:text-white text-xs sm:text-sm md:text-base text-center break-words leading-tight w-full">
                           {category.name}
                         </span>
                       </button>

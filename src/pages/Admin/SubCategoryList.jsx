@@ -11,6 +11,8 @@ import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import SubCategoryForm from "../../components/SubCategoryForm";
 import Modal from "../../components/Modal";
+import { BASE_URL } from "../../redux/constants";
+import { Tag } from "lucide-react";
 
 const SubCategoryList = () => {
   const { data: categories = [] } = useFetchCategoriesQuery();
@@ -94,9 +96,10 @@ const SubCategoryList = () => {
 
       setSubCategoriesList((prev) =>
         prev.map((sc) =>
-          sc._id === selectedSubCategory._id ? res : sc
+          sc._id === selectedSubCategory._id ? res.data : sc
         )
       );
+
       toast.success("Updated successfully");
       setModalVisible(false);
       resetUpdateFields();
@@ -145,24 +148,54 @@ const SubCategoryList = () => {
 
         <hr className="my-6" />
 
-        <div className="flex flex-wrap">
-          {subCategoriesList.map((sub) => (
-            <button
-              key={sub._id}
-              className="bg-white border border-blue-500 text-blue-600 py-2 px-4 rounded-lg m-2 hover:bg-blue-600 hover:text-white"
-              onClick={() => {
-                setSelectedSubCategory(sub);
-                setUpdatingName(sub.name);
-                setUpdatingKeywords(sub.keywords || "");
-                setUpdatingCategoryId(sub.category);
-                setUpdatingImage(null);
-                setModalVisible(true);
-              }}
-            >
-              {sub.name}
-            </button>
-          ))}
-        </div>
+<div className="px-6 py-5 bg-gray-50 dark:bg-gray-900 mt-5">
+  <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">
+    Your Subcategories
+  </h3>
+
+  {subCategoriesList?.length === 0 ? (
+    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <p>No subcategories found. Create your first subcategory above.</p>
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      {subCategoriesList.map((sub) => (
+        <button
+          key={sub._id}
+          onClick={() => {
+            setSelectedSubCategory(sub);
+            setUpdatingName(sub.name);
+            setUpdatingKeywords(sub.keywords || "");
+            setUpdatingCategoryId(sub.category);
+            setUpdatingImage(sub.image || null);
+            setModalVisible(true);
+          }}
+          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition flex flex-col items-center justify-center text-center gap-2"
+        >
+          {sub.image ? (
+            <img
+              src={`${BASE_URL}/${sub.image}`}
+              alt={sub.name}
+              className="w-16 h-16 object-cover rounded-full border-2 border-gray-200 dark:border-gray-700"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+              <Tag size={24} className="text-gray-400" />
+            </div>
+          )}
+<span
+  title={sub.name}
+  className="font-bold text-gray-800 dark:text-white text-xs sm:text-sm md:text-base text-center break-words leading-tight w-full"
+>
+  {sub.name}
+</span>
+
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
         <Modal isOpen={modalVisible} onClose={() => setModalVisible(false)}>
           <SubCategoryForm

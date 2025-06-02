@@ -809,8 +809,9 @@ const Inventory = () => {
               ) : (
                 <>
                   <div className="flex flex-col space-y-4">
-                    {filteredProducts.length > 0 ? (
+                    {filteredProducts.length > 0 ? ( 
                       filteredProducts.map((product) => (
+                        
                         <div
                           key={product._id}
                           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -819,6 +820,7 @@ const Inventory = () => {
                             <div className="md:w-48 h-48 flex-shrink-0">
                               <img
                                 src={BASE_URL + product.images[0]}
+                              
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                               />

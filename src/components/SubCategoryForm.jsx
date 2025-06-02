@@ -1,4 +1,7 @@
 import React from "react";
+import { BASE_URL } from "../redux/constants";
+import { FaTrash } from "react-icons/fa";
+
 
 const SubCategoryForm = ({
   name,
@@ -15,8 +18,8 @@ const SubCategoryForm = ({
   setImage
 }) => {
 
-  console.log(categoryOptions)
 
+console.log(`${BASE_URL}/${image}`);
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-white rounded-xl dark:bg-gray-900">
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -86,15 +89,24 @@ const SubCategoryForm = ({
         </div>
 
         {/* Preview */}
-        {image && (
-          <div className="mt-4">
-            <img
-              src={typeof image === "string" ? image : URL.createObjectURL(image)}
-              alt="Subcategory Preview"
-              className="w-32 h-32 object-cover rounded-lg border shadow-md ring-1 ring-gray-300"
-            />
-          </div>
-        )}
+{/* Preview */}
+{image && (
+  <div className="relative mt-4 w-32 h-32">
+    <img
+      src={typeof image === "string" ? `${BASE_URL}/${image}` : URL.createObjectURL(image)}
+      alt="Subcategory Preview"
+      className="w-full h-full object-cover rounded-lg border shadow-md ring-1 ring-gray-300"
+    />
+    <button
+      type="button"
+      onClick={() => setImage(null)}
+      className="absolute top-1 right-1 bg-white rounded-full p-1 text-red-600 hover:text-red-800 hover:bg-gray-100 shadow"
+    >
+      <FaTrash size={16} />
+    </button>
+  </div>
+)}
+
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-3 sm:space-y-0 mt-6">
