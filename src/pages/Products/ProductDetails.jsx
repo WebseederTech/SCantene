@@ -44,11 +44,14 @@ const ProductDetails = () => {
   const [quantityMethod, setQuantityMethod] = useState("manual"); // Options: "manual", "slab"
 
   const {
-    data: product = { slabs: [] },
+    data,
     isLoading,
     refetch,
     error,
   } = useGetProductDetailsQuery(productId);
+
+  const product = data?.product || { slabs: [] }; // Assuming API response shape: { message, data }
+
   const [addProductClick] = useAddProductClickMutation();
 
   const { userInfo } = useSelector((state) => state.auth);

@@ -22,8 +22,9 @@ const AdminProductUpdate = () => {
   const params = useParams();
   const socket = io(`${BASE_URL}`);
 
-  const { data: productData } = useGetProductByIdQuery(params._id);
-
+  const { data } = useGetProductByIdQuery(params._id);
+  const productData = data?.product;
+  
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mrp, setMrp] = useState(0);
