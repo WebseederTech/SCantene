@@ -18,8 +18,6 @@ const SubCategoryForm = ({
   setImage
 }) => {
 
-
-console.log(`${BASE_URL}/${image}`);
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-white rounded-xl dark:bg-gray-900">
       <form onSubmit={handleSubmit} className="space-y-5">

@@ -166,7 +166,7 @@ const SubCategoryList = () => {
             setSelectedSubCategory(sub);
             setUpdatingName(sub.name);
             setUpdatingKeywords(sub.keywords || "");
-            setUpdatingCategoryId(sub.category);
+            setUpdatingCategoryId(sub.category._id);
             setUpdatingImage(sub.image || null);
             setModalVisible(true);
           }}
