@@ -342,7 +342,7 @@ setIsBestSeller(productData.isBestSeller || false);
   const toggleStockStatus = () => {
     setOutOfStock((prevState) => !prevState);
   };
-  
+
   const handleVariantChange = (index, e) => {
   const { name, value, type } = e.target;
 
@@ -401,6 +401,24 @@ setIsBestSeller(productData.isBestSeller || false);
     console.error("Upload Error:", error);
     toast.error(error?.data?.message || "Error uploading images.");
   }
+};
+
+const handleRemoveVariantImage = (variantIndex, imageIndex) => {
+  setVariants((prevVariants) => {
+    const updatedVariants = [...prevVariants];
+    const updatedImages = [...(updatedVariants[variantIndex].images || [])];
+
+    // Remove the image at the given index
+    updatedImages.splice(imageIndex, 1);
+
+    // Update the variant's images
+    updatedVariants[variantIndex] = {
+      ...updatedVariants[variantIndex],
+      images: updatedImages,
+    };
+
+    return updatedVariants;
+  });
 };
 
 
@@ -700,7 +718,8 @@ setIsBestSeller(productData.isBestSeller || false);
               variant.images.map((img, i) => (
                 <div key={i} className="relative group">
                   <img
-                    src={typeof img === "string" ? img : URL.createObjectURL(img)}
+                  
+                    src={typeof img === "string" ? BASE_URL+img : URL.createObjectURL(img)}
                     alt={`Variant ${index + 1} Image ${i + 1}`}
                     className="h-16 w-16 object-cover rounded-md border border-gray-300"
                   />
