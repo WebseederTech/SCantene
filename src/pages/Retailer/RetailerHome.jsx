@@ -291,7 +291,7 @@ const BuyerHome = () => {
                             `Product ${index + 1}`}
                         </p>
                         <Link
-                          to={`/product/${item.productId._id}`}
+                          to={`/product/${item?.productId?._id}`}
                           className="text-blue-600 hover:underline flex items-center justify-center mt-2"
                         >
                           Shop Now <FaShoppingCart className="ml-2" />

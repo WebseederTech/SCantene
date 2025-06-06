@@ -106,7 +106,7 @@ const SeasonSpecialCarousel = ({ title, products }) => {
                               }`}
                           </h3>
                           <Link
-                            to={`/product/${item.productId._id}`}
+                            to={`/product/${item?.productId?._id}`}
                             className="text-blue-600 hover:underline flex items-center justify-center mt-2"
                           >
                             Shop Now <FaShoppingCart className="ml-2" />

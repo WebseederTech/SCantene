@@ -442,6 +442,8 @@ import ExportProducts from "./ExportProducts";
 import ImportProducts from "./ImportProducts";
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
+import { useFetchSubCategoriesQuery } from "../../redux/api/subCategoryApiSlice";
+import SubCategoryList from "./SubCategoryList";
 
 const Inventory = () => {
   // State Hooks
@@ -454,11 +456,13 @@ const Inventory = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [brandFilter, setBrandFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [subCategoryFilter, setSubCategoryFilter] = useState("");
   const [stockFilter, setStockFilter] = useState("");
 
   // Query Hooks
   const { data: brandList } = useFetchBrandsQuery();
   const { data: categoryList } = useFetchCategoriesQuery();
+    const { data: subCategories = [] } = useFetchSubCategoriesQuery();
   const {
     data: products,
     refetch,
@@ -507,6 +511,13 @@ const Inventory = () => {
       );
     }
 
+        // Apply subCategory filter if selected
+    if (subCategoryFilter) {
+      roleFilteredProducts = roleFilteredProducts.filter(
+        product => product.subCategory?._id === subCategoryFilter
+      );
+    }
+
     // Apply stock filter if selected
     if (stockFilter) {
       roleFilteredProducts = roleFilteredProducts.filter(
@@ -515,7 +526,7 @@ const Inventory = () => {
     }
 
     return roleFilteredProducts;
-  }, [products, userInfo, userId, brandFilter, categoryFilter, stockFilter]);
+  }, [products, userInfo, userId, brandFilter, categoryFilter,subCategoryFilter, stockFilter]);
 
   // Refetch Effect
   useEffect(() => {
@@ -549,6 +560,7 @@ const Inventory = () => {
     setSearchTerm("");
     setBrandFilter("");
     setCategoryFilter("");
+    setSubCategoryFilter("");
     setStockFilter("");
     setCurrentPage(1);
   };
@@ -704,6 +716,7 @@ const Inventory = () => {
                       setIsLoader={setIsLoader}
                       brandList={brandList}
                       categoryList={categoryList}
+                      subCategories={subCategories}
                     />
                   </div>
                 </div>
@@ -745,6 +758,23 @@ const Inventory = () => {
                           ))}
                         </select>
                       </div>
+                                            <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Filter by Sub-Category
+                        </label>
+                        <select
+                          value={subCategoryFilter}
+                          onChange={(e) => setSubCategoryFilter(e.target.value)}
+                          className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">All Sub-Categories</option>
+                          {subCategories?.map((category) => (
+                            <option key={category._id} value={category._id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Stock Status
@@ -779,8 +809,9 @@ const Inventory = () => {
               ) : (
                 <>
                   <div className="flex flex-col space-y-4">
-                    {filteredProducts.length > 0 ? (
+                    {filteredProducts.length > 0 ? ( 
                       filteredProducts.map((product) => (
+                        
                         <div
                           key={product._id}
                           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -789,6 +820,7 @@ const Inventory = () => {
                             <div className="md:w-48 h-48 flex-shrink-0">
                               <img
                                 src={BASE_URL + product.images[0]}
+                              
                                 alt={product.name}
                                 className="w-full h-full object-cover"
                               />
@@ -839,7 +871,20 @@ const Inventory = () => {
                                     </span>
                                   </div>
                                 )}
+
+                                  {product.subCategory && (
+                                  <div className="flex items-center">
+                                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2">
+                                      Sub-Category:
+                                    </span>
+                                    <span className="text-sm text-gray-900 dark:text-white">
+                                      {product.subCategory.name}
+                                    </span>
+                                  </div>
+                                )}
+
                               </div>
+                              
 
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="flex flex-wrap gap-2">

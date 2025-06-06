@@ -337,6 +337,7 @@ const menuItems = {
     { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/admin/productlist", label: "Products", icon: Package },
     { path: "/admin/categorylist", label: "Category", icon: Tag },
+    { path: "/admin/subCategorylist", label: "Sub-Category", icon: Tag },
     { path: "/admin/brandlist", label: "Brand", icon: Box },
     {
       path: "/admin/all-users",

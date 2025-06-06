@@ -1,54 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useCreateBrandMutation,
   useUpdateBrandMutation,
   useDeleteBrandMutation,
   useFetchBrandsQuery,
 } from "../../redux/api/brandApiSlice";
-
 import { toast } from "react-toastify";
 import BrandForm from "../../components/BrandForm";
 import Modal from "../../components/Modal";
-import AdminMenu from "./AdminMenu";
 import { useSelector } from "react-redux";
+import { Tag } from "lucide-react";
+import { BASE_URL } from "../../redux/constants";
 
 const BrandList = () => {
-  const { data: brands = [], refetch } = useFetchBrandsQuery(); // Fetch brands
+  // Fetch all brands from the backend
+  const { data: fetchedBrands } = useFetchBrandsQuery();
   const { userInfo } = useSelector((state) => state.auth);
   const createdBy = userInfo._id;
 
-  // State for create form
-  const [name, setName] = useState("");
-  const [aboutTheBrandCreate, setAboutTheBrandCreate] = useState("");
+  // Local state to hold the filtered list of brands
+  const [brandsList, setBrandsList] = useState([]);
 
-  // State for update modal
+  // State for the "create" form
+  const [name, setName] = useState("");
+  const [aboutTheBrand, setAboutTheBrand] = useState("");
+  const [image, setImage] = useState(null);
+
+  // State for the "update" modal
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [updatingName, setUpdatingName] = useState("");
-  const [aboutTheBrandUpdate, setAboutTheBrandUpdate] = useState("");
+  const [updatingAbout, setUpdatingAbout] = useState("");
+  const [updatingImage, setUpdatingImage] = useState(null);
 
+  // Modal visibility
   const [modalVisible, setModalVisible] = useState(false);
 
-  const [createBrand] = useCreateBrandMutation();
-  const [updateBrand] = useUpdateBrandMutation();
-  const [deleteBrand] = useDeleteBrandMutation();
+  // RTK Query mutations
+  const [createBrand, { isLoading: isCreating }] = useCreateBrandMutation();
+  const [updateBrand, { isLoading: isUpdating }] = useUpdateBrandMutation();
+  const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
 
+  // Whenever fetchedBrands or the user's role changes, filter accordingly
+  useEffect(() => {
+    if (fetchedBrands) {
+      const filtered =
+        userInfo.role === "Seller"
+          ? fetchedBrands.filter((brand) => brand.createdBy === createdBy)
+          : fetchedBrands;
+      setBrandsList(filtered);
+    }
+  }, [fetchedBrands, createdBy, userInfo.role]);
+
+  // Handler to create a new brand
   const handleCreateBrand = async (e) => {
     e.preventDefault();
-
     if (!name) {
       toast.error("Brand name is required");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("aboutTheBrand", aboutTheBrand);
+    formData.append("createdBy", createdBy);
+    if (image) {
+      formData.append("image", image);
+    }
+
     try {
-      const result = await createBrand({ name, aboutTheBrand: aboutTheBrandCreate, createdBy }).unwrap();
+      const result = await createBrand(formData).unwrap();
       if (result.error) {
         toast.error(result.error);
       } else {
+        // Append the newly created brand to local state
+        setBrandsList((prev) => [...prev, result]);
         setName("");
-        setAboutTheBrandCreate(""); // Reset create form
+        setAboutTheBrand("");
+        setImage(null);
         toast.success(`${result.name} is created.`);
-        refetch(); // Refresh the brand list
       }
     } catch (error) {
       console.error(error);
@@ -56,29 +85,44 @@ const BrandList = () => {
     }
   };
 
+  // Handler to update an existing brand
   const handleUpdateBrand = async (e) => {
     e.preventDefault();
-
     if (!updatingName) {
       toast.error("Brand name is required");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("name", updatingName);
+    formData.append("aboutTheBrand", updatingAbout);
+    if (updatingImage) {
+      formData.append("image", updatingImage);
+    }
+
     try {
       const result = await updateBrand({
         brandId: selectedBrand._id,
-        updatedBrand: { name: updatingName, aboutTheBrand: aboutTheBrandUpdate },
+        updatedBrand: formData,
       }).unwrap();
 
       if (result.error) {
         toast.error(result.error);
       } else {
+        // Update the local brandsList with the updated data
+        setBrandsList((prev) =>
+          prev.map((b) =>
+            b._id === selectedBrand._id
+              ? { ...b, name: result.name, image: result.image, aboutTheBrand: result.aboutTheBrand }
+              : b
+          )
+        );
         toast.success(`${result.name} is updated`);
         setSelectedBrand(null);
         setUpdatingName("");
-        setAboutTheBrandUpdate("");
+        setUpdatingAbout("");
+        setUpdatingImage(null);
         setModalVisible(false);
-        refetch(); // Refresh the brand list
       }
     } catch (error) {
       console.error(error);
@@ -86,76 +130,103 @@ const BrandList = () => {
     }
   };
 
+  // Handler to delete a brand
   const handleDeleteBrand = async () => {
     try {
-      await deleteBrand(selectedBrand._id).unwrap();
-
-      toast.success(`${selectedBrand.name} is deleted.`);
-      setSelectedBrand(null);
-      setAboutTheBrandUpdate("");
-      setModalVisible(false);
-      refetch(); // Refresh the brand list
+      const result = await deleteBrand(selectedBrand._id).unwrap();
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        // Remove the deleted brand from local state
+        setBrandsList((prev) => prev.filter((b) => b._id !== selectedBrand._id));
+        toast.success(`${result.name} is deleted.`);
+        setSelectedBrand(null);
+        setModalVisible(false);
+      }
     } catch (error) {
       console.error(error);
-      toast.error("Brand deletion failed, try again.");
+      toast.error("Brand deletion failed. Try again.");
     }
   };
 
-  const filteredBrands =
-    brands && userInfo.role === "Seller"
-      ? brands.filter((brand) => brand.createdBy === createdBy)
-      : brands;
-
   return (
-    <div className="flex flex-col items-center darktheme px-4">
-      {/* <AdminMenu  /> */}
-      <section className="w-full  darktheme bg-opacity-50 rounded-lg shadow-lg">
-        
-        {/* <h2 className="text-2xl font-semibold mb-6 text-center text-black">
-          Manage Brands
-        </h2> */}
-        {/* Create form */}
-        <BrandForm
-          value={name}
-          setValue={setName}
-          handleSubmit={handleCreateBrand}
-          aboutTheBrand={aboutTheBrandCreate}
-          setAboutTheBrand={setAboutTheBrandCreate}
-        />
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Create Brand Form */}
+        <div className="bg-white overflow-hidden dark:bg-gray-800 rounded-lg shadow">
+          <div>
+            <BrandForm
+              value={name}
+              setValue={setName}
+              handleSubmit={handleCreateBrand}
+              aboutTheBrand={aboutTheBrand}
+              setAboutTheBrand={setAboutTheBrand}
+              image={image}
+              setImage={setImage}
+              buttonText={isCreating ? "Creating..." : "Create"}
+            />
+          </div>
 
-        <hr className="my-4" />
+          {/* List of Brands */}
+          <div className="px-6 py-5 bg-gray-50 dark:bg-gray-900 mt-5 rounded-b-lg">
+            <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">
+              Your Brands
+            </h3>
 
-        <div className="flex flex-wrap">
-          {filteredBrands?.map((brand) => (
-            <div key={brand._id}>
-              <button
-                className="bg-white border border-customBlue text-customBlue py-2 px-4 rounded-lg m-3 hover:bg-customBlue hover:text-white focus:outline-none foucs:ring-2 focus:ring-customBlue focus:ring-opacity-50"
-                onClick={() => {
-                  setModalVisible(true);
-                  setSelectedBrand(brand);
-                  setUpdatingName(brand.name);
-                  setAboutTheBrandUpdate(brand.aboutTheBrand); // Update modal state
-                }}
-              >
-                {brand.name}
-              </button>
-            </div>
-          ))}
+            {brandsList?.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <p>No brands found. Create your first brand above.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {brandsList.map((brand) => (
+                  <button
+                    key={brand._id}
+                    onClick={() => {
+                      setModalVisible(true);
+                      setSelectedBrand(brand);
+                      setUpdatingName(brand.name);
+                      setUpdatingAbout(brand.aboutTheBrand || "");
+                      setUpdatingImage(brand.image || null);
+                    }}
+                    className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition flex flex-col items-center justify-center text-center gap-2"
+                  >
+                    {brand.image ? (
+                      <img
+                        src={`${BASE_URL}/${brand.image}`}
+                        alt={brand.name}
+                        className="w-16 h-16 object-cover rounded-full border-2 border-gray-200 dark:border-gray-700"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                        <Tag size={24} className="text-gray-400" />
+                      </div>
+                    )}
+                    <span className="font-bold text-gray-800 dark:text-white text-xs sm:text-sm md:text-base text-center break-words leading-tight w-full">
+                      {brand.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* Update modal */}
-        <Modal isOpen={modalVisible} onClose={() => setModalVisible(false)}>
-          <BrandForm
-            value={updatingName}
-            setValue={setUpdatingName}
-            handleSubmit={handleUpdateBrand}
-            buttonText="Update"
-            handleDelete={handleDeleteBrand}
-            aboutTheBrand={aboutTheBrandUpdate}
-            setAboutTheBrand={setAboutTheBrandUpdate}
-          />
-        </Modal>
-      </section>
+      {/* Update Modal */}
+      <Modal isOpen={modalVisible} onClose={() => setModalVisible(false)}>
+        <BrandForm
+          value={updatingName}
+          setValue={setUpdatingName}
+          handleSubmit={handleUpdateBrand}
+          buttonText={isUpdating ? "Updating..." : "Update"}
+          handleDelete={handleDeleteBrand}
+          image={updatingImage}
+          setImage={setUpdatingImage}
+          aboutTheBrand={updatingAbout}
+          setAboutTheBrand={setUpdatingAbout}
+        />
+      </Modal>
     </div>
   );
 };

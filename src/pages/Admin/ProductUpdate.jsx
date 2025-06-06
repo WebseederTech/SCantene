@@ -16,13 +16,15 @@ import { AiFillCloseCircle } from "react-icons/ai";
 import { FiPlus, FiMinus } from "react-icons/fi";
 import { BASE_URL } from "../../redux/constants";
 import { io } from "socket.io-client";
+import { useFetchSubCategoriesQuery } from "../../redux/api/subCategoryApiSlice";
 
 const AdminProductUpdate = () => {
   const params = useParams();
   const socket = io(`${BASE_URL}`);
 
-  const { data: productData } = useGetProductByIdQuery(params._id);
-
+  const { data } = useGetProductByIdQuery(params._id);
+  const productData = data?.product;
+  
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [mrp, setMrp] = useState(0);
@@ -33,6 +35,7 @@ const AdminProductUpdate = () => {
   const [tax, setTax] = useState(0);
   const [offerPrice, setOfferPrice] = useState(0);
   const [category, setCategory] = useState("");
+  const [subCategory, setSubCategory] = useState("");
   const [quantity, setQuantity] = useState("");
   const [brand, setBrand] = useState("");
   const [countInStock, setCountInStock] = useState(0);
@@ -56,6 +59,7 @@ const AdminProductUpdate = () => {
 
   const navigate = useNavigate();
   const { data: categories = [] } = useFetchCategoriesQuery();
+  const { data: subCategories = [] } = useFetchSubCategoriesQuery();
   const { data: brands = [] } = useFetchBrandsQuery();
   const [uploadProductImage] = useUploadProductImageMutation();
   const [updateProduct] = useUpdateProductMutation();
@@ -69,6 +73,7 @@ const AdminProductUpdate = () => {
       setMrp(productData.mrp);
       setOfferPrice(productData.offerPrice);
       setCategory(productData.category);
+      setSubCategory(productData.subCategory);
       setBrand(productData.brand?._id);
       setCountInStock(productData.countInStock);
       setLowStockThreshold(productData.lowStockThreshold || 0);
@@ -194,6 +199,7 @@ const AdminProductUpdate = () => {
         tax,
         offerPrice,
         category,
+        subCategory,
         brand,
         countInStock,
         lowStockThreshold,
@@ -624,6 +630,21 @@ const AdminProductUpdate = () => {
                 >
                   <option value="">Select Category</option>
                   {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+                            <div className="w-full">
+                <label>Sub-Category</label>
+                <select
+                  className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
+                  value={subCategory}
+                  onChange={(e) => setSubCategory(e.target.value)}
+                >
+                  <option value="">Select Sub-Category</option>
+                  {subCategories.map((c) => (
                     <option key={c._id} value={c._id}>
                       {c.name}
                     </option>

@@ -64,6 +64,7 @@ import DashboardCreationForm from "./pages/Retailer/DashboardCreationForm.jsx";
 import AdminBroadcastNotification from "./pages/Admin/AdminNotification.jsx";
 import AllCategories from "./pages/Admin/AllCategories.jsx";
 import UserCartList from "./pages/Admin/UserCart.jsx";
+import SubCategoryList from "./pages/Admin/SubCategoryList.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -90,6 +91,7 @@ const router = createBrowserRouter(
           <Route path="/yourorder" element={<UserOrder />} />
           <Route path="/notification" element={<NotificationList />} />
           <Route path="/all-categories" element={<AllCategories />} />
+          
 
           <Route path="/category/:cname/:cid" element={<CategoryDetails />} />
           <Route path="/brand/:bname/:bid" element={<BrandDetails />} />
@@ -109,6 +111,7 @@ const router = createBrowserRouter(
           {/* <Route path="buyer-home-page" element={<DashboardCreationForm />} /> */}
 
           <Route path="categorylist" element={<CategoryList />} />
+          <Route path="subCategorylist" element={<SubCategoryList />} />
           <Route path="brandlist" element={<BrandList />} />
           <Route path="bank-details" element={<BankDetails />} />
           <Route path="slab-requests" element={<SlabRequestList />} />

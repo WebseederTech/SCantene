@@ -1,32 +1,57 @@
-import { FaTrash } from "react-icons/fa";
+import React from "react";
 import { BASE_URL } from "../redux/constants";
+import { FaTrash } from "react-icons/fa";
 
-const CategoryForm = ({
-  value,
-  setValue,
+
+const SubCategoryForm = ({
+  name,
+  setName,
   keywords,
   setKeywords,
+  categoryId,
+  setCategoryId,
+  categoryOptions = [],
   handleSubmit,
   buttonText = "Submit",
   handleDelete,
   image,
   setImage
 }) => {
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 bg-whiterounded-xl">
+    <div className="p-4 sm:p-6 md:p-8 bg-white rounded-xl dark:bg-gray-900">
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Category Name */}
+        {/* Subcategory Name */}
         <div className="space-y-1">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Category Name
+            Subcategory Name
           </label>
           <input
             type="text"
-            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md w-full dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            placeholder="Write category name"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
+            placeholder="Enter subcategory name"
+            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md w-full dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
+        </div>
+
+        {/* Parent Category */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Parent Category
+          </label>
+<select
+  value={categoryId}
+  onChange={(e) => setCategoryId(e.target.value)}
+  className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md w-full dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+>
+  <option value="">Select category</option>
+  {categoryOptions.map((cat) => (
+    <option key={cat._id} value={cat._id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
         </div>
 
         {/* Keywords */}
@@ -36,14 +61,14 @@ const CategoryForm = ({
           </label>
           <input
             type="text"
-            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md w-full dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             placeholder="Enter keywords"
+            className="py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md w-full dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
           />
         </div>
 
-        {/* Upload Image with dashed border */}
+        {/* Upload Image */}
         <div className="space-y-1">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Upload Image
@@ -61,13 +86,13 @@ const CategoryForm = ({
           </div>
         </div>
 
-
         {/* Preview */}
+{/* Preview */}
 {image && (
   <div className="relative mt-4 w-32 h-32">
     <img
       src={typeof image === "string" ? `${BASE_URL}/${image}` : URL.createObjectURL(image)}
-      alt="Category Preview"
+      alt="Subcategory Preview"
       className="w-full h-full object-cover rounded-lg border shadow-md ring-1 ring-gray-300"
     />
     <button
@@ -79,6 +104,7 @@ const CategoryForm = ({
     </button>
   </div>
 )}
+
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-3 sm:space-y-0 mt-6">
@@ -104,4 +130,4 @@ const CategoryForm = ({
   );
 };
 
-export default CategoryForm;
+export default SubCategoryForm;

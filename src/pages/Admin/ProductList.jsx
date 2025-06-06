@@ -1,831 +1,3 @@
-// import { AiFillCloseCircle } from "react-icons/ai";
-// import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import {
-//   useCreateProductMutation,
-//   useGetCouponCodeQuery,
-//   useUploadProductImageMutation,
-// } from "../../redux/api/productApiSlice";
-// import { useFetchCategoriesQuery } from "../../redux/api/categoryApiSlice";
-// import { toast } from "react-toastify";
-// import AdminMenu from "./AdminMenu";
-// import { useFetchBrandsQuery } from "../../redux/api/brandApiSlice";
-// import ReactQuill from "react-quill";
-// import "react-quill/dist/quill.snow.css";
-// import { useSelector } from "react-redux";
-// import { FiPlus, FiMinus } from "react-icons/fi";
-// import { BASE_URL } from "../../redux/constants";
-// import { io } from "socket.io-client";
-// import CouponSelector from "./CouponSelector";
-
-// const ProductList = () => {
-//   const [image, setImage] = useState("");
-//   const [images, setImages] = useState([]);
-//   const [imageFiles, setImageFiles] = useState([]); // Store files to preview & upload
-
-//   const [name, setName] = useState("");
-//   const [description, setDescription] = useState("");
-//   const [price, setPrice] = useState("");
-//   const [mrp, setMrp] = useState("");
-//   const [offerPrice, setOfferPrice] = useState("");
-//   const [category, setCategory] = useState("");
-//   // const [quantity, setQuantity] = useState("");
-//   const [brand, setBrand] = useState("");
-//   const [stock, setStock] = useState(0);
-//   const [imageUrls, setImageUrls] = useState([]);
-//   const [slabs, setSlabs] = useState([
-//     { minQuantity: "", maxQuantity: "", price: "", couponId: "", expire: "" },
-//   ]);
-
-//   const [aboutTheBrand, setAboutTheBrand] = useState("");
-//   const [specification, setSpecification] = useState("");
-//   const [lowStockThreshold, setLowStockThreshold] = useState("");
-//   const [errors, setErrors] = useState({});
-//   const [formData, setFormData] = useState({
-//     name: "",
-//     description: "",
-//     mrp: "",
-//     offerPrice: "",
-//     category: "",
-//     brand: "",
-//     stock: "",
-//     aboutTheBrand: "",
-//     specification: "",
-//     createdBy: "",
-//     lowStockThreshold: "",
-//     imageUrls: [],
-//     coupons: [], // Initialize the coupons array
-//     slabs: [
-//       { minQuantity: "", maxQuantity: "", price: "", couponId: "", expire: "" },
-//     ],
-//     height: "",
-//     weight: "",
-//     breadth: "",
-//     width: "",
-//     tax: "",
-//     shippingRate: "",
-//   });
-//   const socket = io(`${BASE_URL}`);
-
-//   const navigate = useNavigate();
-
-//   const [uploadProductImage] = useUploadProductImageMutation();
-//   const [createProduct] = useCreateProductMutation();
-//   const { data: categories } = useFetchCategoriesQuery();
-//   const { data: brands } = useFetchBrandsQuery();
-//   const { data: coupons } = useGetCouponCodeQuery();
-
-//   const user = useSelector((state) => state.auth);
-//   const createdBy = user.userInfo._id;
-
-//   useEffect(() => {
-//     const savedData = localStorage.getItem("productFormData");
-//     if (savedData) {
-//       setFormData(JSON.parse(savedData));
-//     }
-//   }, []);
-//   useEffect(() => {
-//     socket.on("productAdded", (newProduct) => {
-//       console.log("New Product Added:", newProduct);
-//       // Refresh product list or update state
-//     });
-
-//     socket.on("productUpdated", (updatedProduct) => {
-//       console.log("Product Updated:", updatedProduct);
-//       // Refresh product list or update state
-//     });
-
-//     socket.on("productDeleted", (deletedProduct) => {
-//       console.log("Product Deleted:", deletedProduct);
-//       // Refresh product list or update state
-//     });
-
-//     return () => {
-//       socket.off("productAdded");
-//       socket.off("productUpdated");
-//       socket.off("productDeleted");
-//     };
-//   }, []);
-
-//   // Update local storage whenever formData changes
-
-//   useEffect(() => {
-//     localStorage.setItem("productFormData", JSON.stringify(formData));
-//   }, [formData]);
-//   useEffect(() => {
-//     if (user?.userInfo?._id) {
-//       setFormData((prevState) => ({
-//         ...prevState,
-//         createdBy: user.userInfo._id,
-//       }));
-//     }
-//   }, [user]);
-
-//   // const handleSubmit = async (e) => {
-//   //   e.preventDefault();
-
-//   //   try {
-//   //     const productData = new FormData();
-
-//   //     // Ensure `imageUrls` is an array and append each image URL to the productData
-//   //     formData.imageUrls.forEach((url, index) => {
-//   //       productData.append(`imageUrls[${index}]`, url); // Append image URLs as array format
-//   //     });
-
-//   //     // Append other product details to the productData
-//   //     productData.append("name", formData.name);
-//   //     productData.append("description", formData.description);
-//   //     productData.append("mrp", formData.mrp);
-//   //     productData.append("offerPrice", formData.offerPrice);
-//   //     productData.append("category", formData.category);
-//   //     productData.append("brand", formData.brand);
-//   //     productData.append("countInStock", formData.stock);
-//   //     productData.append("aboutTheBrand", formData.aboutTheBrand);
-//   //     productData.append("specification", formData.specification);
-//   //     productData.append("createdBy", formData.createdBy);
-//   //     productData.append("lowStockThreshold", formData.lowStockThreshold);
-//   //     productData.append("createdBy", formData.createdBy);
-
-//   //     productData.append("height", formData.height);
-//   //     productData.append("width", formData.width);
-//   //     productData.append("weight", formData.weight);
-//   //     productData.append("breadth", formData.breadth);
-//   //     productData.append("tax", formData.tax);
-//   //     productData.append("shippingRate", formData.shippingRate);
-
-//   //     // Append slabs
-//   //     // formData.slabs.forEach((slab, index) => {
-//   //     //   productData.append(`slabs[${index}][minQuantity]`, slab.minQuantity);
-//   //     //   productData.append(`slabs[${index}][maxQuantity]`, slab.maxQuantity);
-//   //     //   productData.append(`slabs[${index}][price]`, slab.price);
-//   //     // });
-
-//   //     // In the handleSubmit function, update the slab append code
-//   //     formData.slabs.forEach((slab, index) => {
-//   //       productData.append(`slabs[${index}][minQuantity]`, slab.minQuantity);
-//   //       productData.append(`slabs[${index}][maxQuantity]`, slab.maxQuantity);
-//   //       productData.append(`slabs[${index}][price]`, slab.price);
-
-//   //       if (slab.couponId)
-//   //         productData.append(`slabs[${index}][couponId]`, slab.couponId);
-
-//   //       // ✅ Fix expire field
-//   //       productData.append(
-//   //         `slabs[${index}][expire]`,
-//   //         slab.expire ? slab.expire : "" // Send "" (empty string) instead of "null"
-//   //       );
-//   //     });
-
-//   //     const { data } = await createProduct(productData);
-
-//   //     if (data.error) {
-//   //       toast.error("Product creation failed. Try again.");
-//   //     } else {
-//   //       toast.success(`${data.name} is created`);
-//   //       localStorage.removeItem("productFormData");
-//   //       navigate("/admin/admin-inventory");
-//   //     }
-//   //   } catch (error) {
-//   //     console.error("Product creation failed:", error);
-//   //     toast.error("Product creation failed. Try again.");
-//   //   }
-//   // };
-
-//   // Handle Slab Change
-//   // const handleSlabChange = (index, field, value) => {
-//   //   const updatedSlabs = formData.slabs.map((slab, i) =>
-//   //     i === index ? { ...slab, [field]: value } : slab
-//   //   );
-
-//   //   setFormData((prev) => ({
-//   //     ...prev,
-//   //     slabs: updatedSlabs,
-//   //   }));
-//   // };
-
-//   // const addSlab = () => {
-//   //   setFormData((prev) => ({
-//   //     ...prev,
-//   //     slabs: [...prev.slabs, { minQuantity: "", maxQuantity: "", price: "" }],
-//   //   }));
-//   // };
-
-//   // Modify the handleSlabChange function to handle coupon selection
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const productData = new FormData();
-
-//       // Append image URLs
-//       formData.imageUrls.forEach((url, index) => {
-//         productData.append(`imageUrls[${index}]`, url);
-//       });
-
-//       // Append basic product details
-//       productData.append("name", formData.name);
-//       productData.append("description", formData.description);
-//       productData.append("mrp", formData.mrp);
-//       productData.append("offerPrice", formData.offerPrice);
-//       productData.append("category", formData.category);
-//       productData.append("brand", formData.brand);
-//       productData.append("countInStock", formData.stock);
-//       productData.append("aboutTheBrand", formData.aboutTheBrand);
-//       productData.append("specification", formData.specification);
-//       productData.append("createdBy", formData.createdBy);
-//       productData.append("lowStockThreshold", formData.lowStockThreshold);
-//       productData.append("height", formData.height);
-//       productData.append("width", formData.width);
-//       productData.append("weight", formData.weight);
-//       productData.append("breadth", formData.breadth);
-//       productData.append("tax", formData.tax);
-//       productData.append("shippingRate", formData.shippingRate);
-
-//       // Append product-level coupons if they exist
-//       if (formData.coupons && formData.coupons.length > 0) {
-//         formData.coupons.forEach((couponId, index) => {
-//           productData.append(`coupons[${index}]`, couponId);
-//         });
-//       }
-
-//       // Append slabs
-//       formData.slabs.forEach((slab, index) => {
-//         productData.append(`slabs[${index}][minQuantity]`, slab.minQuantity);
-//         productData.append(`slabs[${index}][maxQuantity]`, slab.maxQuantity);
-//         productData.append(`slabs[${index}][price]`, slab.price);
-
-//         if (slab.couponId) {
-//           productData.append(`slabs[${index}][couponId]`, slab.couponId);
-//         }
-
-//         // Handle expire date properly
-//         if (slab.expire) {
-//           productData.append(`slabs[${index}][expire]`, slab.expire);
-//         } else {
-//           productData.append(`slabs[${index}][expire]`, ""); // Send empty string instead of null
-//         }
-//       });
-
-//       const { data } = await createProduct(productData);
-
-//       if (data.error) {
-//         toast.error("Product creation failed. Try again.");
-//       } else {
-//         toast.success(`${data.name} is created`);
-//         localStorage.removeItem("productFormData");
-//         navigate("/admin/admin-inventory");
-//       }
-//     } catch (error) {
-//       console.error("Product creation failed:", error);
-//       toast.error("Product creation failed. Try again.");
-//     }
-//   };
-//   const handleSlabChange = (index, field, value) => {
-//     const updatedSlabs = [...formData.slabs];
-
-//     if (field === "expire") {
-//       // ✅ Convert DD-MM-YYYY to YYYY-MM-DD for storage
-//       const [day, month, year] = value.split("-");
-//       updatedSlabs[index][field] = `${year}-${month}-${day}`;
-//     } else {
-//       updatedSlabs[index][field] = value;
-//     }
-
-//     setFormData((prev) => ({ ...prev, slabs: updatedSlabs }));
-//   };
-
-//   // Update the addSlab function to include couponId
-//   const addSlab = () => {
-//     setFormData((prev) => ({
-//       ...prev,
-//       slabs: [
-//         ...prev.slabs,
-//         { minQuantity: "", maxQuantity: "", price: "", couponId: "" },
-//       ],
-//     }));
-//   };
-
-//   const removeSlab = (index) => {
-//     setFormData((prev) => ({
-//       ...prev,
-//       slabs: prev.slabs.filter((_, i) => i !== index),
-//     }));
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-
-//     if (name === "brand") {
-//       const selectedBrand = brands.find((brand) => brand._id === value);
-//       console.log("Selected Brand:", selectedBrand);
-//       setFormData((prev) => ({
-//         ...prev,
-//         aboutTheBrand: selectedBrand ? selectedBrand.aboutTheBrand : "",
-//         brand: selectedBrand ? selectedBrand._id : "",
-//       }));
-//     }
-
-//     if (name === "category") {
-//       const selectedCategory = categories.find((cate) => cate._id === value);
-//       if (!selectedCategory) {
-//         setErrors((prev) => ({
-//           ...prev,
-//           category: "Category is required",
-//         }));
-//       } else {
-//         setFormData((prev) => ({
-//           ...prev,
-//           category: selectedCategory._id,
-//         }));
-//         setErrors((prev) => ({
-//           ...prev,
-//           category: "", // Clear error message if valid category is selected
-//         }));
-//       }
-//     } else {
-//       setFormData((prev) => ({
-//         ...prev,
-//         [name]: value,
-//       }));
-//     }
-//   };
-
-//   const uploadFileHandler = async (e) => {
-//     const files = Array.from(e.target.files);
-
-//     if (files.length === 0) {
-//       toast.error("Please select at least one image to upload.");
-//       return;
-//     }
-
-//     const formData = new FormData();
-//     files.forEach((file) => formData.append("images", file));
-
-//     try {
-//       const response = await uploadProductImage(formData).unwrap();
-
-//       if (response?.images?.length) {
-//         toast.success("Images uploaded successfully!");
-
-//         // Update the `formData` state to hold uploaded image URLs
-//         setFormData((prevData) => ({
-//           ...prevData,
-//           imageUrls: [...prevData.imageUrls, ...response.images],
-//         }));
-//       } else {
-//         toast.error("No images returned from the server.");
-//       }
-//     } catch (error) {
-//       console.error("Upload Error:", error);
-//       toast.error(error?.data?.message || "Error uploading images.");
-//     }
-//   };
-
-//   const handleRemoveImage = (index) => {
-//     setFormData((prevData) => ({
-//       ...prevData,
-//       imageUrls: prevData.imageUrls.filter((_, i) => i !== index),
-//     }));
-//   };
-
-//   const validateFields = () => {
-//     const newErrors = {};
-
-//     if (!formData.name.trim()) newErrors.name = "Product name is required";
-//     if (!formData.description.trim())
-//       newErrors.description = "Description is required";
-//     if (!formData.mrp || isNaN(formData.mrp) || Number(formData.mrp) <= 0)
-//       newErrors.mrp = "Valid MRP is required";
-//     if (
-//       !formData.offerPrice ||
-//       isNaN(formData.offerPrice) ||
-//       Number(formData.offerPrice) <= 0
-//     )
-//       newErrors.offerPrice = "Valid Offer Price is required";
-//     // if (!formData.brand || (typeof formData.brand !== 'string' && !formData.brand._id))
-//     //   newErrors.brand = "Brand selection is required";
-//     if (!formData.category)
-//       newErrors.category = "Category selection is required";
-//     if (!formData.stock || isNaN(formData.stock) || Number(formData.stock) < 0)
-//       newErrors.stock = "Stock must be a non-negative number";
-//     if (
-//       !formData.lowStockThreshold ||
-//       isNaN(formData.lowStockThreshold) ||
-//       Number(formData.lowStockThreshold) < 0
-//     )
-//       newErrors.lowStockThreshold =
-//         "Low Stock Threshold must be a non-negative number";
-//     if (
-//       formData.slabs.some(
-//         (slab) => !slab.minQuantity || !slab.maxQuantity || !slab.price
-//       )
-//     )
-//       newErrors.slabs = "All slab fields are required";
-
-//     setErrors(newErrors);
-//     return Object.keys(newErrors).length === 0;
-//   };
-
-//   return (
-//     <div className="flex flex-col items-center darktheme px-6">
-//       <section className="w-full  darktheme bg-opacity-50 rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 border-2 border-gray-600 ">
-//         <div className="md:w-1/4 p-3 mt-2">
-//           <AdminMenu />
-//         </div>
-//         <h2 className="text-2xl font-semibold mb-6 text-center text-customBlue">
-//           Create Product
-//         </h2>
-
-//         {formData.imageUrls.length > 0 && (
-//           <div className="text-center flex gap-4 flex-wrap">
-//             {formData.imageUrls.map((url, index) => (
-//               <div key={index} className="relative">
-//                 <img
-//                   src={BASE_URL + url}
-//                   alt="product"
-//                   className="max-h-[100px] object-cover border border-gray-400 rounded-md my-2"
-//                 />
-//                 <button
-//                   type="button"
-//                   onClick={() => handleRemoveImage(index)}
-//                   className="absolute top-4 right-2 text-red-500 bg-white rounded-full text-lg"
-//                 >
-//                   <AiFillCloseCircle />
-//                 </button>
-//               </div>
-//             ))}
-//           </div>
-//         )}
-
-//         <div className="mb-3">
-//           <label className="border border-gray-400 px-4 block w-full text-center rounded-lg cursor-pointer font-bold py-8 darkthemeinput">
-//             {formData.imageUrls.length > 0
-//               ? `${formData.imageUrls.length} files uploaded`
-//               : "Upload Images 400 X 500"}
-//             <input
-//               type="file"
-//               name="images"
-//               accept="image/*"
-//               multiple
-//               onChange={uploadFileHandler}
-//               className="hidden"
-//             />
-//           </label>
-//         </div>
-//         <div className="w-full">
-//           <div className="flex flex-col ">
-//             <div className="flex justify-between gap-4 flex-col md:flex-row">
-//               <div className="w-full">
-//                 <label htmlFor="name">Name</label> <br />
-//                 <input
-//                   type="text"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="name"
-//                   value={formData.name}
-//                   onChange={handleChange}
-//                 />
-//                 {errors.name && <p className="text-red-500">{errors.name}</p>}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">MRP</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="mrp"
-//                   value={formData.mrp}
-//                   onChange={handleChange}
-//                 />
-//                 {errors.mrp && <p className="text-red-500">{errors.mrp}</p>}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Height</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="height"
-//                   value={formData.height}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Width</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="width"
-//                   value={formData.width}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Breadth</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="breadth"
-//                   value={formData.breadth}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Weight</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="weight"
-//                   value={formData.weight}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Tax</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="tax"
-//                   value={formData.tax}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//               <div className="w-full ">
-//                 <label htmlFor="name block">Shipping Rate</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="shippingRate"
-//                   value={formData.shippingRate}
-//                   onChange={handleChange}
-//                 />
-//                 {/* {errors.mrp && <p className="text-red-500">{errors.mrp}</p>} */}
-//               </div>
-//             </div>
-
-//             <div className="flex justify-between gap-4 flex-col md:flex-row">
-//               <div className="w-full">
-//                 <label htmlFor="name block">Offer Price</label> <br />
-//                 <input
-//                   type="number"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   name="offerPrice"
-//                   value={formData.offerPrice}
-//                   onChange={handleChange}
-//                 />
-//                 {errors.offerPrice && (
-//                   <p className="text-red-500">{errors.offerPrice}</p>
-//                 )}
-//               </div>
-
-//               <div className="w-full">
-//                 <label htmlFor="brand">Brand</label> <br />
-//                 <select
-//                   name="brand"
-//                   value={formData.brand} // Bind the select value to formData.brand
-//                   placeholder="Choose Brand"
-//                   className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                   onChange={handleChange}
-//                 >
-//                   <option value="">Select Brand</option>
-//                   {brands?.map((c) => (
-//                     <option key={c._id} value={c._id}>
-//                       {c.name}
-//                     </option>
-//                   ))}
-//                 </select>
-//                 {errors.brand && <p className="text-red-500">{errors.brand}</p>}
-//               </div>
-//             </div>
-//           </div>
-//           <div className="flex flex-wrap"></div>
-
-//           <label htmlFor="description" className="my-5">
-//             Description
-//           </label>
-//           <ReactQuill
-//             value={formData.description}
-//             onChange={(value) =>
-//               setFormData((prev) => ({ ...prev, description: value }))
-//             }
-//             theme="snow"
-//             placeholder="Enter Description"
-//             className="w-full mb-4"
-//             name="description"
-//           />
-//           {errors.description && (
-//             <p className="text-red-500">{errors.description}</p>
-//           )}
-
-//           <div className="flex justify-between gap-4 flex-col md:flex-row">
-//             <div className="w-full">
-//               <label htmlFor="name block">Count In Stock</label> <br />
-//               <input
-//                 type="text"
-//                 name="stock"
-//                 className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                 value={formData.stock}
-//                 onChange={handleChange}
-//               />
-//               {errors.stock && <p className="text-red-500">{errors.stock}</p>}
-//             </div>
-//             {/* Product-Level Coupons */}
-//             {/* <div className="mb-5">
-//               <label>Coupons (Optional)</label>
-//               <select
-//                 multiple
-//                 value={formData.coupons || []}
-//                 onChange={(e) =>
-//                   setFormData({
-//                     ...formData,
-//                     coupons: Array.from(
-//                       e.target.selectedOptions,
-//                       (option) => option.value
-//                     ),
-//                   })
-//                 }
-//                 className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//               >
-//                 {coupons?.map((coupon) => (
-//                   <option key={coupon._id} value={coupon._id}>
-//                     {coupon.name} - {coupon.percentage}% off
-//                   </option>
-//                 ))}
-//               </select>
-//             </div> */}
-//           </div>
-//           <CouponSelector
-//             coupons={coupons}
-//             formData={formData}
-//             setFormData={setFormData}
-//           />
-
-//           {/*Slab Section */}
-
-//           <div className="mb-5">
-//             <label>Pricing Slabs</label>
-
-//             {formData.slabs.map((slab, index) => (
-//               <div
-//                 key={index}
-//                 className="flex items-center flex-col md:flex-row space-x-3 my-2"
-//               >
-//                 <input
-//                   type="number"
-//                   placeholder="Min Quantity"
-//                   value={slab.minQuantity}
-//                   onChange={(e) =>
-//                     handleSlabChange(index, "minQuantity", e.target.value)
-//                   }
-//                   className="p-2 border border-gray-400 rounded-lg darkthemeinput w-full"
-//                 />
-//                 <input
-//                   type="number"
-//                   placeholder="Max Quantity"
-//                   value={slab.maxQuantity}
-//                   onChange={(e) =>
-//                     handleSlabChange(index, "maxQuantity", e.target.value)
-//                   }
-//                   className="p-2 border border-gray-400 rounded-lg darkthemeinput w-full"
-//                 />
-//                 <input
-//                   type="number"
-//                   placeholder="Price"
-//                   value={slab.price}
-//                   onChange={(e) =>
-//                     handleSlabChange(index, "price", e.target.value)
-//                   }
-//                   className="p-2 border border-gray-400 rounded-lg darkthemeinput w-full"
-//                 />
-
-//                 {/* Add the expiration date picker */}
-//                 {/* <input
-//                   type="date"
-//                   placeholder="Expire Date (DD-MM-YYYY)"
-//                   value={slab.expire}
-//                   onChange={(e) =>
-//                     handleSlabChange(index, "expire", e.target.value)
-//                   }
-//                   className="p-2 border border-gray-400 rounded-lg darkthemeinput w-full"
-//                 />
-
-//                 <select
-//                   value={slab.couponId || ""}
-//                   onChange={(e) =>
-//                     handleSlabChange(index, "couponId", e.target.value)
-//                   }
-//                   className="p-2 border border-gray-400 rounded-lg darkthemeinput w-full"
-//                 >
-//                   <option value="">Select Coupon (Optional)</option>
-//                   {coupons?.map((coupon) => (
-//                     <option key={coupon._id} value={coupon._id}>
-//                       {coupon.name} - {coupon.percentage}% off
-//                     </option>
-//                   ))}
-//                 </select> */}
-
-//                 {/* Remove slab button */}
-//                 <button
-//                   type="button"
-//                   onClick={() => removeSlab(index)}
-//                   className="py-2 px-4 mt-1 rounded-lg text-lg font-bold bg-red-600 text-white"
-//                 >
-//                   <FiMinus className="w-5 h-5" />
-//                 </button>
-
-//                 {/* Add slab button */}
-//                 <button
-//                   onClick={addSlab}
-//                   className="py-2 px-4 mt-1 rounded-lg text-lg font-bold bg-blue-600 text-white"
-//                 >
-//                   <FiPlus className="w-5 h-5" />
-//                 </button>
-//               </div>
-//             ))}
-//           </div>
-
-//           <div className="flex justify-between w-full gap-4 flex-col md:flex-row">
-//             <div className="w-full">
-//               <label htmlFor="lowStockThreshold" className="my-5">
-//                 Low Stock Threshold
-//               </label>{" "}
-//               <br />
-//               <input
-//                 name="lowStockThreshold"
-//                 type="number"
-//                 className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                 value={formData.lowStockThreshold}
-//                 onChange={handleChange}
-//               />
-//               {errors.lowStockThreshold && (
-//                 <p className="text-red-500">{errors.lowStockThreshold}</p>
-//               )}
-//             </div>
-
-//             <div className="w-full">
-//               <label htmlFor="">Category</label> <br />
-//               <select
-//                 name="category"
-//                 placeholder="Choose Category"
-//                 className="p-2 mb-3 w-full border border-gray-400 rounded-lg darkthemeinput"
-//                 onChange={handleChange}
-//               >
-//                 <option value={formData.category}>Select Category</option>
-//                 {categories?.map((c) => (
-//                   <option key={c._id} value={c._id}>
-//                     {c.name}
-//                   </option>
-//                 ))}
-//               </select>
-//             </div>
-//           </div>
-//           <label htmlFor="aboutTheBrand" className="my-5">
-//             About the Brand
-//           </label>
-//           <ReactQuill
-//             value={formData.aboutTheBrand}
-//             onChange={(value) =>
-//               setFormData((prev) => ({ ...prev, aboutTheBrand: value }))
-//             }
-//             theme="snow"
-//             placeholder="Enter aboutTheBrand"
-//             className="w-full mb-4"
-//           />
-//           {/* New Field: Specifications */}
-//           <label htmlFor="specification" className="my-5">
-//             Specifications
-//           </label>
-//           <ReactQuill
-//             value={formData.specification}
-//             onChange={(value) =>
-//               setFormData((prev) => ({ ...prev, specification: value }))
-//             }
-//             theme="snow"
-//             placeholder="Enter Specification"
-//             className="w-full"
-//             name="specification" // Added name attribute here
-//           />
-//           <div className="flex justify-center mt-8">
-//             <button
-//               type="submit"
-//               onClick={handleSubmit}
-//               className="bg-customBlue text-white py-2 px-4 rounded-lg hover:bg-customBlue/80 focus:outline-none focus:ring-2 focus:ring-customBlue focus:ring-opacity-50 w-full sm:w-auto"
-//             >
-//               Submit
-//             </button>
-//           </div>
-//         </div>
-//       </section>
-//     </div>
-//   );
-// };
-
-// export default ProductList;
-
-
 import React, { useState, useEffect } from "react";
 import { AiFillCloseCircle } from "react-icons/ai";
 import { FiPlus, FiMinus } from "react-icons/fi";
@@ -846,6 +18,7 @@ import { useSelector } from "react-redux";
 import { BASE_URL } from "../../redux/constants";
 import { io } from "socket.io-client";
 import CouponSelector from "./CouponSelector";
+import { useFetchSubCategoriesQuery } from "../../redux/api/subCategoryApiSlice";
 
 const ProductList = () => {
   const [formData, setFormData] = useState({
@@ -854,6 +27,7 @@ const ProductList = () => {
     mrp: "",
     offerPrice: "",
     category: "",
+    subCategory: "",
     brand: "",
     stock: "",
     aboutTheBrand: "",
@@ -871,6 +45,38 @@ const ProductList = () => {
     width: "",
     tax: "",
     shippingRate: "",
+
+    // ✅ Newly added fields (from schema):
+    sku: "",
+    tags: [],
+    keywords: [],
+    variants: [
+      {
+        color: "",
+        size: "",
+        additionalPrice: 0,
+        images: [],
+        countInStock: 0,
+        sku: "",
+      },
+    ],
+    isEnable: true,
+    isFeatured: false,
+    isBestSeller: false,
+    unit: "piece",
+    deliveryDays: "",
+    returnable: true,
+    returnWindow: 7,
+    warrantyPeriod: "",
+    isDigital: false,
+    downloadLink: "",
+    visibility: "Public",
+    attributes: [
+      {
+        key: "",
+        value: "",
+      },
+    ],
   });
 
   const [errors, setErrors] = useState({});
@@ -880,6 +86,7 @@ const ProductList = () => {
   const [uploadProductImage] = useUploadProductImageMutation();
   const [createProduct] = useCreateProductMutation();
   const { data: categories } = useFetchCategoriesQuery();
+  const { data: subCategories = [] } = useFetchSubCategoriesQuery();
   const { data: brands } = useFetchBrandsQuery();
   const { data: coupons } = useGetCouponCodeQuery();
 
@@ -945,12 +152,14 @@ const ProductList = () => {
         productData.append(`imageUrls[${index}]`, url);
       });
 
-      // Append basic product details
+      // Basic product details
       productData.append("name", formData.name);
+      productData.append("sku", formData.sku);
       productData.append("description", formData.description);
       productData.append("mrp", formData.mrp);
       productData.append("offerPrice", formData.offerPrice);
       productData.append("category", formData.category);
+      productData.append("subCategory", formData.subCategory);
       productData.append("brand", formData.brand);
       productData.append("countInStock", formData.stock);
       productData.append("aboutTheBrand", formData.aboutTheBrand);
@@ -963,30 +172,77 @@ const ProductList = () => {
       productData.append("breadth", formData.breadth);
       productData.append("tax", formData.tax);
       productData.append("shippingRate", formData.shippingRate);
+      productData.append("deliveryDays", formData.deliveryDays);
+      productData.append("returnWindow", formData.returnWindow);
+      productData.append("warrantyPeriod", formData.warrantyPeriod);
+      productData.append("unit", formData.unit);
+      productData.append("downloadLink", formData.downloadLink || "");
+      productData.append("visibility", formData.visibility || "Public");
 
-      // Append product-level coupons if they exist
+      // Boolean fields
+      productData.append("isEnable", formData.isEnable);
+      productData.append("isFeatured", formData.isFeatured);
+      productData.append("isBestSeller", formData.isBestSeller);
+      productData.append("returnable", formData.returnable);
+      productData.append("isDigital", formData.isDigital);
+
+      // Tags & Keywords
+      formData.tags.forEach((tag, index) => {
+        productData.append(`tags[${index}]`, tag);
+      });
+
+      formData.keywords.forEach((keyword, index) => {
+        productData.append(`keywords[${index}]`, keyword);
+      });
+
+      // Coupons
       if (formData.coupons && formData.coupons.length > 0) {
         formData.coupons.forEach((couponId, index) => {
           productData.append(`coupons[${index}]`, couponId);
         });
       }
 
-      // Append slabs
+      // Slabs
       formData.slabs.forEach((slab, index) => {
         productData.append(`slabs[${index}][minQuantity]`, slab.minQuantity);
         productData.append(`slabs[${index}][maxQuantity]`, slab.maxQuantity);
         productData.append(`slabs[${index}][price]`, slab.price);
+       if (slab.couponId && slab.couponId.trim() !== "") {
+  productData.append(`slabs[${index}][couponId]`, slab.couponId);
+}
+        productData.append(`slabs[${index}][expire]`, slab.expire || "");
+      });
 
-        if (slab.couponId) {
-          productData.append(`slabs[${index}][couponId]`, slab.couponId);
-        }
+const validVariants = formData.variants?.filter((variant) => {
+      return (
+        variant.color.trim() !== "" ||
+        variant.size.trim() !== "" ||
+        variant.additionalPrice > 0 ||
+        variant.countInStock > 0 ||
+        variant.sku.trim() !== "" ||
+        (variant.images && variant.images.length > 0)
+      );
+    });
 
-        // Handle expire date properly
-        if (slab.expire) {
-          productData.append(`slabs[${index}][expire]`, slab.expire);
-        } else {
-          productData.append(`slabs[${index}][expire]`, "");
-        }
+    // Append variants only if there are any valid ones
+    if (validVariants && validVariants.length > 0) {
+      validVariants.forEach((variant, index) => {
+        Object.entries(variant).forEach(([key, value]) => {
+          if (key === "images" && Array.isArray(value)) {
+            value.forEach((img, i) => {
+              productData.append(`variants[${index}][images][${i}]`, img);
+            });
+          } else {
+            productData.append(`variants[${index}][${key}]`, value);
+          }
+        });
+      });
+    }
+
+      // Attributes
+      formData.attributes.forEach((attr, index) => {
+        productData.append(`attributes[${index}][key]`, attr.key || "");
+        productData.append(`attributes[${index}][value]`, attr.value || "");
       });
 
       const { data } = await createProduct(productData);
@@ -1062,6 +318,25 @@ const ProductList = () => {
           category: "",
         }));
       }
+    } else if (name === "subCategory") {
+      const selectedSubCategory = subCategories?.find(
+        (cate) => cate._id === value
+      );
+      if (!selectedSubCategory) {
+        setErrors((prev) => ({
+          ...prev,
+          subCategory: "Sub-Category is required",
+        }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          subCategory: selectedSubCategory._id,
+        }));
+        setErrors((prev) => ({
+          ...prev,
+          subCategory: "",
+        }));
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -1123,6 +398,8 @@ const ProductList = () => {
       newErrors.offerPrice = "Valid Offer Price is required";
     if (!formData.category)
       newErrors.category = "Category selection is required";
+    if (!formData.subCategory)
+      newErrors.subCategory = "Sub-Category selection is required";
     if (!formData.stock || isNaN(formData.stock) || Number(formData.stock) < 0)
       newErrors.stock = "Stock must be a non-negative number";
     if (
@@ -1143,13 +420,62 @@ const ProductList = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: checked,
+    }));
+  };
+
+  const handleVariantChange = (index, e) => {
+  const { name, value, type } = e.target;
+
+  setFormData((prev) => {
+    const updatedVariants = [...prev.variants];
+
+    // If the field is numeric, convert value accordingly
+    let val = value;
+    if (type === "number") {
+      val = value === "" ? "" : Number(value);
+    }
+
+    // Update the specific property of the variant at given index
+    updatedVariants[index] = {
+      ...updatedVariants[index],
+      [name]: val,
+    };
+
+    return {
+      ...prev,
+      variants: updatedVariants,
+    };
+  });
+};
+
+
+const handleVariantImageChange = (index, e) => {
+  const files = Array.from(e.target.files); // FileList to array
+
+  setFormData(prev => {
+    const updatedVariants = [...prev.variants];
+    // Replace or append files as per your logic (here replacing)
+    updatedVariants[index] = {
+      ...updatedVariants[index],
+      images: files,
+    };
+    return { ...prev, variants: updatedVariants };
+  });
+};
+
+
   return (
     <div className="min-h-screen ">
-       {/* <AdminMenu /> */}
+      {/* <AdminMenu /> */}
       <div className="max-w-7xl px-4 ">
         <div className="w-full">
           {/* Sidebar */}
-        
+
           {/* Main Content */}
           <div className="w-full">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
@@ -1224,7 +550,10 @@ const ProductList = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Product Name
                       </label>
                       <input
@@ -1237,12 +566,17 @@ const ProductList = () => {
                         placeholder="Enter product name"
                       />
                       {errors.name && (
-                        <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.name}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="mrp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="mrp"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         MRP
                       </label>
                       <input
@@ -1255,12 +589,17 @@ const ProductList = () => {
                         placeholder="0.00"
                       />
                       {errors.mrp && (
-                        <p className="mt-1 text-sm text-red-600">{errors.mrp}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.mrp}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="offerPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="offerPrice"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Offer Price
                       </label>
                       <input
@@ -1273,12 +612,17 @@ const ProductList = () => {
                         placeholder="0.00"
                       />
                       {errors.offerPrice && (
-                        <p className="mt-1 text-sm text-red-600">{errors.offerPrice}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.offerPrice}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="stock" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="stock"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Stock Quantity
                       </label>
                       <input
@@ -1291,12 +635,17 @@ const ProductList = () => {
                         placeholder="0"
                       />
                       {errors.stock && (
-                        <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.stock}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="lowStockThreshold" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="lowStockThreshold"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Low Stock Threshold
                       </label>
                       <input
@@ -1309,12 +658,17 @@ const ProductList = () => {
                         placeholder="0"
                       />
                       {errors.lowStockThreshold && (
-                        <p className="mt-1 text-sm text-red-600">{errors.lowStockThreshold}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.lowStockThreshold}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="category"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Category
                       </label>
                       <select
@@ -1332,12 +686,45 @@ const ProductList = () => {
                         ))}
                       </select>
                       {errors.category && (
-                        <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.category}
+                        </p>
                       )}
                     </div>
 
                     <div>
-                      <label htmlFor="brand" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="category"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Sub-Category
+                      </label>
+                      <select
+                        id="subCategory"
+                        name="subCategory"
+                        value={formData.subCategory}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Select Sub-Category</option>
+                        {subCategories?.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.subCategory && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.subCategory}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="brand"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Brand
                       </label>
                       <select
@@ -1355,7 +742,9 @@ const ProductList = () => {
                         ))}
                       </select>
                       {errors.brand && (
-                        <p className="mt-1 text-sm text-red-600">{errors.brand}</p>
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors.brand}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1369,7 +758,10 @@ const ProductList = () => {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div>
-                      <label htmlFor="height" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="height"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Height
                       </label>
                       <input
@@ -1384,7 +776,10 @@ const ProductList = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="width" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="width"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Width
                       </label>
                       <input
@@ -1399,7 +794,10 @@ const ProductList = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="breadth" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="breadth"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Breadth
                       </label>
                       <input
@@ -1414,7 +812,10 @@ const ProductList = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="weight" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="weight"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Weight
                       </label>
                       <input
@@ -1429,7 +830,10 @@ const ProductList = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="tax" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="tax"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Tax (%)
                       </label>
                       <input
@@ -1444,7 +848,10 @@ const ProductList = () => {
                     </div>
 
                     <div>
-                      <label htmlFor="shippingRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label
+                        htmlFor="shippingRate"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
                         Shipping Rate
                       </label>
                       <input
@@ -1460,9 +867,399 @@ const ProductList = () => {
                   </div>
                 </div>
 
+                {/* Variants*/}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Product Variants
+                  </h3>
+
+                  {formData.variants.map((variant, index) => (
+                    <div
+                      key={index}
+                      className="mb-4 p-4 border rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                    >
+                      <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">
+                        Variant #{index + 1}
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div>
+                          <label
+                            htmlFor={`color-${index}`}
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
+                            Color
+                          </label>
+                          <input
+                            type="text"
+                            id={`color-${index}`}
+                            name="color"
+                            value={variant.color}
+                            onChange={(e) => handleVariantChange(index, e)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="e.g. Red"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor={`size-${index}`}
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
+                            Size
+                          </label>
+                          <input
+                            type="text"
+                            id={`size-${index}`}
+                            name="size"
+                            value={variant.size}
+                            onChange={(e) => handleVariantChange(index, e)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="e.g. M, L, XL"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor={`additionalPrice-${index}`}
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
+                            Additional Price
+                          </label>
+                          <input
+                            type="number"
+                            id={`additionalPrice-${index}`}
+                            name="additionalPrice"
+                            value={variant.additionalPrice}
+                            onChange={(e) => handleVariantChange(index, e)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor={`countInStock-${index}`}
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
+                            Stock Count
+                          </label>
+                          <input
+                            type="number"
+                            id={`countInStock-${index}`}
+                            name="countInStock"
+                            value={variant.countInStock}
+                            onChange={(e) => handleVariantChange(index, e)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="0"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor={`sku-${index}`}
+                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                          >
+                            SKU
+                          </label>
+                          <input
+                            type="text"
+                            id={`sku-${index}`}
+                            name="sku"
+                            value={variant.sku}
+                            onChange={(e) => handleVariantChange(index, e)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                            placeholder="SKU12345"
+                          />
+                        </div>
+                              {/* Images upload */}
+      <div className="sm:col-span-2 lg:col-span-5">
+        <label
+          htmlFor={`images-${index}`}
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          Upload Images
+        </label>
+        <input
+          type="file"
+          id={`images-${index}`}
+          multiple
+          accept="image/*"
+          onChange={(e) => handleVariantImageChange(index, e)}
+          className="block w-full text-sm text-gray-500
+                     file:mr-4 file:py-2 file:px-4
+                     file:rounded-md file:border-0
+                     file:text-sm file:font-semibold
+                     file:bg-blue-50 file:text-blue-700
+                     hover:file:bg-blue-100
+                     dark:file:bg-gray-700 dark:file:text-gray-300"
+        />
+        {/* Preview thumbnails */}
+        <div className="flex flex-wrap mt-2 gap-2">
+          {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
+            <img
+              key={i}
+              src={typeof img === "string" ? img : URL.createObjectURL(img)}
+              alt={`Variant ${index + 1} Image ${i + 1}`}
+              className="h-16 w-16 object-cover rounded-md border border-gray-300"
+            />
+          ))}
+        </div>
+      </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Button to add a new variant */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        variants: [
+                          ...prev.variants,
+                          {
+                            color: "",
+                            size: "",
+                            additionalPrice: 0,
+                            countInStock: 0,
+                            sku: "",
+                            images: [],
+                          },
+                        ],
+                      }))
+                    }
+                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
+                  >
+                    Add Variant
+                  </button>
+                </div>
+
+                {/* Sku Meta & Info*/}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    SKU & Meta Info
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label
+                        htmlFor="sku"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        SKU
+                      </label>
+                      <input
+                        type="text"
+                        id="sku"
+                        name="sku"
+                        value={formData.sku}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="Enter SKU"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="unit"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Unit (e.g. pcs, kg)
+                      </label>
+                      <input
+                        type="text"
+                        id="unit"
+                        name="unit"
+                        value={formData.unit}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., pcs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Logistics & Return Policy*/}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Logistics & Return Policy
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label
+                        htmlFor="deliveryDays"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Delivery Days
+                      </label>
+                      <input
+                        type="number"
+                        id="deliveryDays"
+                        name="deliveryDays"
+                        value={formData.deliveryDays}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., 5"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="returnWindow"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Return Window (days)
+                      </label>
+                      <input
+                        type="number"
+                        id="returnWindow"
+                        name="returnWindow"
+                        value={formData.returnWindow}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., 7"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="warrantyPeriod"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Warranty Period (months)
+                      </label>
+                      <input
+                        type="number"
+                        id="warrantyPeriod"
+                        name="warrantyPeriod"
+                        value={formData.warrantyPeriod}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., 12"
+                      />
+                    </div>
+
+                    <div className="flex items-center mt-6">
+                      <input
+                        type="checkbox"
+                        id="returnable"
+                        name="returnable"
+                        checked={formData.returnable}
+                        onChange={handleCheckboxChange}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      />
+                      <label
+                        htmlFor="returnable"
+                        className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                      >
+                        Returnable
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tags & Keywords */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    SEO Tags & Keywords
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Tags
+                      </label>
+                      <input
+                        type="text"
+                        value={(formData.tags ?? []).join(",")}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            tags: e.target.value.split(","),
+                          })
+                        }
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., organic, summer"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Keywords
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.keywords.join(",")}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            keywords: e.target.value.split(","),
+                          })
+                        }
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                        placeholder="e.g., tshirt, cotton"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/*. Visibility Settings */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Product Visibility & Status
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {[
+                      { label: "Enable Product", name: "isEnable" },
+                      { label: "Best Seller", name: "isBestSeller" },
+                      { label: "Featured", name: "isFeatured" },
+                      { label: "Digital Product", name: "isDigital" },
+                    ].map(({ label, name }) => (
+                      <div key={name} className="flex items-center mt-2">
+                        <input
+                          type="checkbox"
+                          id={name}
+                          name={name}
+                          checked={formData[name]}
+                          onChange={handleCheckboxChange}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                        />
+                        <label
+                          htmlFor={name}
+                          className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                        >
+                          {label}
+                        </label>
+                      </div>
+                    ))}
+
+                    <div>
+                      <label
+                        htmlFor="visibility"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      >
+                        Visibility
+                      </label>
+                      <select
+                        id="visibility"
+                        name="visibility"
+                        value={formData.visibility}
+                        onChange={handleChange}
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="Public">Public</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Private">Private</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Description */}
                 <div className="mb-6">
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Description
                   </label>
                   <div className="bg-white dark:bg-gray-700 rounded-md">
@@ -1476,20 +1273,28 @@ const ProductList = () => {
                     />
                   </div>
                   {errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.description}
+                    </p>
                   )}
                 </div>
 
                 {/* About the Brand */}
                 <div className="mb-6">
-                  <label htmlFor="aboutTheBrand" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="aboutTheBrand"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     About the Brand
                   </label>
                   <div className="bg-white dark:bg-gray-700 rounded-md">
                     <ReactQuill
                       value={formData.aboutTheBrand}
                       onChange={(value) =>
-                        setFormData((prev) => ({ ...prev, aboutTheBrand: value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          aboutTheBrand: value,
+                        }))
                       }
                       theme="snow"
                       placeholder="Enter brand information"
@@ -1499,14 +1304,20 @@ const ProductList = () => {
 
                 {/* Specifications */}
                 <div className="mb-6">
-                  <label htmlFor="specification" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="specification"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Specifications
                   </label>
                   <div className="bg-white dark:bg-gray-700 rounded-md">
                     <ReactQuill
                       value={formData.specification}
                       onChange={(value) =>
-                        setFormData((prev) => ({ ...prev, specification: value }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          specification: value,
+                        }))
                       }
                       theme="snow"
                       placeholder="Enter product specifications"
@@ -1547,7 +1358,13 @@ const ProductList = () => {
                           type="number"
                           placeholder="Min Quantity"
                           value={slab.minQuantity}
-                          onChange={(e) => handleSlabChange(index, "minQuantity", e.target.value)}
+                          onChange={(e) =>
+                            handleSlabChange(
+                              index,
+                              "minQuantity",
+                              e.target.value
+                            )
+                          }
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
@@ -1560,7 +1377,13 @@ const ProductList = () => {
                           type="number"
                           placeholder="Max Quantity"
                           value={slab.maxQuantity}
-                          onChange={(e) => handleSlabChange(index, "maxQuantity", e.target.value)}
+                          onChange={(e) =>
+                            handleSlabChange(
+                              index,
+                              "maxQuantity",
+                              e.target.value
+                            )
+                          }
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
@@ -1573,7 +1396,9 @@ const ProductList = () => {
                           type="number"
                           placeholder="Price"
                           value={slab.price}
-                          onChange={(e) => handleSlabChange(index, "price", e.target.value)}
+                          onChange={(e) =>
+                            handleSlabChange(index, "price", e.target.value)
+                          }
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
@@ -1584,7 +1409,9 @@ const ProductList = () => {
                         </label>
                         <select
                           value={slab.couponId || ""}
-                          onChange={(e) => handleSlabChange(index, "couponId", e.target.value)}
+                          onChange={(e) =>
+                            handleSlabChange(index, "couponId", e.target.value)
+                          }
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         >
                           <option value="">No Coupon</option>
@@ -1602,8 +1429,19 @@ const ProductList = () => {
                         </label>
                         <input
                           type="date"
-                          value={slab.expire ? slab.expire.split("T")[0] : ""}
-                          onChange={(e) => handleSlabChange(index, "expire", e.target.value)}
+                          value={
+                            slab.expire
+                              ? (() => {
+                                  const parts = slab.expire.split("-");
+                                  return parts.length === 3
+                                    ? `${parts[2]}-${parts[1]}-${parts[0]}`
+                                    : "";
+                                })()
+                              : ""
+                          }
+                          onChange={(e) =>
+                            handleSlabChange(index, "expire", e.target.value)
+                          }
                           className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                       </div>
@@ -1653,6 +1491,6 @@ const ProductList = () => {
         </div>
       </div>
     </div>
-  )
+  );
 };
 export default ProductList;

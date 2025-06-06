@@ -8,9 +8,11 @@ const ImportProducts = ({
   setIsLoader,
   brandList, // Pass brand list directly from parent component
   categoryList, // Pass category list directly from parent component
+  subCategories
 }) => {
   const [brandMap, setBrandMap] = useState({});
   const [categoryMap, setCategoryMap] = useState({});
+  const [subCategoryMap, setSubCategoryMap] = useState({});
 
   // Create case-insensitive maps when component mounts or lists change
   useEffect(() => {
@@ -27,7 +29,16 @@ const ImportProducts = ({
       return acc;
     }, {});
     setCategoryMap(newCategoryMap || {});
-  }, [brandList, categoryList]);
+
+    // Create subCategory map with case-insensitive keys
+    const newSubCategoryMap = subCategories?.reduce((acc, subCategory) => {
+      acc[subCategory.name.trim().toLowerCase()] = subCategory;
+      return acc;
+    }, {});
+    setSubCategoryMap(newCategoryMap || {});
+
+  }, [brandList, categoryList,subCategories]);
+
 
   const findCaseInsensitiveMatch = (map, name) => {
     // First, try exact match (preserving original case)
@@ -41,15 +52,20 @@ const ImportProducts = ({
     return match;
   };
 
-  const fetchBrandAndCategoryIds = (brandName, categoryName) => {
+  const fetchBrandAndCategoryIds = (brandName, categoryName,subCategoryName) => {
     const brand = findCaseInsensitiveMatch(brandMap, brandName);
     const category = findCaseInsensitiveMatch(categoryMap, categoryName);
+    const subCategory = findCaseInsensitiveMatch(subCategoryMap, subCategoryName);
+
 
     return {
       brandId: brand ? brand._id : null,
       categoryId: category ? category._id : null,
       brandName: brand ? brand.name : brandName,
       categoryName: category ? category.name : categoryName,
+      subCategoryId: category ? category._id : null,
+      subCategoryName: subCategory ? subCategory.name : subCategoryName
+      
     };
   };
 
@@ -58,6 +74,7 @@ const ImportProducts = ({
       name: row.Name || row.name || "Unknown",
       description: row.Description || row.description || "",
       category: row.Category || row.category || "Default Category",
+      subCategory: row.subCategory || row.Subcategory || "Default Category",
       brand: row.Brand || row.brand || "Default Brand",
       createdBy: row.CreatedBy || row.createdBy || "Unknown",
       mrp: row.MRP || row.mrp || 0,
@@ -97,13 +114,14 @@ const ImportProducts = ({
 
         // Convert brand & category names to ObjectIds
         const transformedData = jsonData.map((item) => {
-          const { brandId, categoryId, brandName, categoryName } =
-            fetchBrandAndCategoryIds(item.brand, item.category);
+          const { brandId, categoryId, subCategoryId,brandName, categoryName , subCategoryName } =
+            fetchBrandAndCategoryIds(item.brand, item.category, item.subCategory);
 
           return {
             ...item,
             brand: brandId || item.brand,
             category: categoryId || item.category,
+            subCategory : subCategoryId || item.subCategory,
             createdBy: userInfo._id,
           };
         });
@@ -111,7 +129,7 @@ const ImportProducts = ({
         // Additional validation and warning for unmatched brands/categories
         const unmatchedItems = transformedData.filter(
           (item) =>
-            typeof item.brand === "string" || typeof item.category === "string"
+            typeof item.brand === "string" || typeof item.category === "string" || typeof item.subCategory === "string"
         );
 
         if (unmatchedItems.length > 0) {
@@ -119,6 +137,8 @@ const ImportProducts = ({
             brand: typeof item.brand === "string" ? item.brand : "Matched",
             category:
               typeof item.category === "string" ? item.category : "Matched",
+            subCategory:
+              typeof item.subCategory === "string" ? item.subCategory : "Matched",
           }));
 
           const warningMessage =
@@ -126,7 +146,7 @@ const ImportProducts = ({
               ? `Warning: The following brands/categories could not be matched:\n${unmatchedDetails
                   .map(
                     (detail) =>
-                      `Brand: ${detail.brand}, Category: ${detail.category}`
+                      `Brand: ${detail.brand}, Category: ${detail.category}, Sub-Category: ${detail.subCategory}`
                   )
                   .join("\n")}\n\nThese will be created as new entries.`
               : "";
