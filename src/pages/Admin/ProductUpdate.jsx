@@ -66,6 +66,23 @@ const AdminProductUpdate = () => {
   const [deleteProduct] = useDeleteProductMutation();
   const { data: coupons } = useGetCouponCodeQuery();
 
+  //variants and extra fields 
+  const [sku,setSku] = useState("");
+  const [variants, setVariants] = useState([]);
+const [attributes, setAttributes] = useState([]);
+const [tags, setTags] = useState([]);
+const [keywords, setKeywords] = useState([]);
+const [unit, setUnit] = useState("");
+const [isDigital, setIsDigital] = useState(false);
+const [downloadLink, setDownloadLink] = useState("");
+const [visibility, setVisibility] = useState(true);
+const [returnable, setReturnable] = useState(false);
+const [returnWindow, setReturnWindow] = useState(0);
+const [warrantyPeriod, setWarrantyPeriod] = useState("");
+const [deliveryDays, setDeliveryDays] = useState(0);
+const [isFeatured, setIsFeatured] = useState(false);
+const [isBestSeller, setIsBestSeller] = useState(false);
+
   useEffect(() => {
     if (productData) {
       setName(productData.name);
@@ -116,6 +133,23 @@ const AdminProductUpdate = () => {
       setTax(productData.tax);
       setBreadth(productData.breadth);
       setShippingRate(productData.shippingRate);
+
+      //variants data
+      setVariants(productData.variants || []);
+      setSku(productData.sku || "");
+setAttributes(productData.attributes || []);
+setTags(productData.tags || []);
+setKeywords(productData.keywords || []);
+setUnit(productData.unit || "");
+setIsDigital(productData.isDigital || false);
+setDownloadLink(productData.downloadLink || "");
+setVisibility(productData.visibility !== false); // default true
+setReturnable(productData.returnable || false);
+setReturnWindow(productData.returnWindow || 0);
+setWarrantyPeriod(productData.warrantyPeriod || "");
+setDeliveryDays(productData.deliveryDays || 0);
+setIsFeatured(productData.isFeatured || false);
+setIsBestSeller(productData.isBestSeller || false);
     }
   }, [productData]);
 
@@ -227,6 +261,22 @@ const AdminProductUpdate = () => {
         images: images,
         removedImages: removedImages,
         shippingRate,
+       
+     // Optional but recommended
+      variants,
+      attributes,
+      tags,
+      keywords,
+      unit,
+      isDigital,
+      downloadLink,
+      visibility,
+      returnable,
+      returnWindow,
+      warrantyPeriod,
+      deliveryDays,
+      isFeatured,
+      isBestSeller,
       };
 
       console.log("Submitting Product Update:", formData); // Debugging API payload
@@ -292,6 +342,67 @@ const AdminProductUpdate = () => {
   const toggleStockStatus = () => {
     setOutOfStock((prevState) => !prevState);
   };
+  
+  const handleVariantChange = (index, e) => {
+  const { name, value, type } = e.target;
+
+  setVariants((prevVariants) => {
+    const updatedVariants = [...prevVariants];
+
+    // If the field is numeric, convert value accordingly
+    let val = value;
+    if (type === "number") {
+      val = value === "" ? "" : Number(value);
+    }
+
+    // Update the specific property of the variant at given index
+    updatedVariants[index] = {
+      ...updatedVariants[index],
+      [name]: val,
+    };
+
+    return updatedVariants;
+  });
+};
+
+
+  const handleVariantImageChange = async (index, e) => {
+  const files = Array.from(e.target.files);
+
+  if (files.length === 0) {
+    toast.error("Please select at least one image to upload.");
+    return;
+  }
+
+  const formDataData = new FormData();
+  files.forEach((file) => formDataData.append("images", file));
+
+  try {
+    const response = await uploadProductImage(formDataData).unwrap();
+
+    if (response?.images?.length) {
+      toast.success("Variant images uploaded successfully!");
+
+      setVariants((prevVariants) => {
+        const updatedVariants = [...prevVariants];
+        updatedVariants[index] = {
+          ...updatedVariants[index],
+          images: [
+            ...(updatedVariants[index]?.images || []),
+            ...response.images,
+          ],
+        };
+        return updatedVariants;
+      });
+    } else {
+      toast.error("No images returned from the server.");
+    }
+  } catch (error) {
+    console.error("Upload Error:", error);
+    toast.error(error?.data?.message || "Error uploading images.");
+  }
+};
+
 
   useEffect(() => {
     socket.on("productAdded", (newProduct) => {
@@ -448,6 +559,397 @@ const AdminProductUpdate = () => {
                   />
                 </div>
               </div>
+
+              {/* Variants */}
+<div className="mb-6">
+  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+    Product Variants
+  </h3>
+
+  {variants.map((variant, index) => (
+    <div
+      key={index}
+      className="mb-4 p-4 border rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+    >
+      <h4 className="text-md font-semibold mb-2 text-gray-800 dark:text-gray-200">
+        Variant #{index + 1}
+      </h4>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Color */}
+        <div>
+          <label
+            htmlFor={`color-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Color
+          </label>
+          <input
+            type="text"
+            id={`color-${index}`}
+            name="color"
+            value={variant.color}
+            onChange={(e) => handleVariantChange(index, e)}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="e.g. Red"
+          />
+        </div>
+
+        {/* Size */}
+        <div>
+          <label
+            htmlFor={`size-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Size
+          </label>
+          <input
+            type="text"
+            id={`size-${index}`}
+            name="size"
+            value={variant.size}
+            onChange={(e) => handleVariantChange(index, e)}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="e.g. M, L, XL"
+          />
+        </div>
+
+        {/* Additional Price */}
+        <div>
+          <label
+            htmlFor={`additionalPrice-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Additional Price
+          </label>
+          <input
+            type="number"
+            id={`additionalPrice-${index}`}
+            name="additionalPrice"
+            value={variant.additionalPrice}
+            onChange={(e) => handleVariantChange(index, e)}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="0"
+          />
+        </div>
+
+        {/* Stock Count */}
+        <div>
+          <label
+            htmlFor={`countInStock-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Stock Count
+          </label>
+          <input
+            type="number"
+            id={`countInStock-${index}`}
+            name="countInStock"
+            value={variant.countInStock}
+            onChange={(e) => handleVariantChange(index, e)}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="0"
+          />
+        </div>
+
+        {/* SKU */}
+        <div>
+          <label
+            htmlFor={`sku-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            SKU
+          </label>
+          <input
+            type="text"
+            id={`sku-${index}`}
+            name="sku"
+            value={variant.sku}
+            onChange={(e) => handleVariantChange(index, e)}
+            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="SKU12345"
+          />
+        </div>
+
+        {/* Images upload */}
+        <div className="sm:col-span-2 lg:col-span-5">
+          <label
+            htmlFor={`images-${index}`}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Upload Images
+          </label>
+          <input
+            type="file"
+            id={`images-${index}`}
+            multiple
+            accept="image/*"
+            onChange={(e) => handleVariantImageChange(index, e)}
+            className="block w-full text-sm text-gray-500
+                       file:mr-4 file:py-2 file:px-4
+                       file:rounded-md file:border-0
+                       file:text-sm file:font-semibold
+                       file:bg-blue-50 file:text-blue-700
+                       hover:file:bg-blue-100
+                       dark:file:bg-gray-700 dark:file:text-gray-300"
+          />
+
+          {/* Preview thumbnails */}
+          <div className="flex flex-wrap mt-2 gap-2">
+            {variant.images && variant.images.length > 0 &&
+              variant.images.map((img, i) => (
+                <div key={i} className="relative group">
+                  <img
+                    src={typeof img === "string" ? img : URL.createObjectURL(img)}
+                    alt={`Variant ${index + 1} Image ${i + 1}`}
+                    className="h-16 w-16 object-cover rounded-md border border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveVariantImage(index, i)}
+                    className="absolute top-[-6px] right-[-6px] bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-80 hover:opacity-100"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+
+  {/* Button to add a new variant */}
+  <button
+    type="button"
+    onClick={() =>
+      setVariants((prev) => [
+        ...prev,
+        {
+          color: "",
+          size: "",
+          additionalPrice: 0,
+          countInStock: 0,
+          sku: "",
+          images: [],
+        },
+      ])
+    }
+    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none"
+  >
+    Add Variant
+  </button>
+</div>
+
+{/* SKU & Meta Info */}
+<div className="mb-6">
+  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+    SKU & Meta Info
+  </h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div>
+      <label
+        htmlFor="sku"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        SKU
+      </label>
+      <input
+        type="text"
+        id="sku"
+        name="sku"
+        value={sku}
+        onChange={(e) => setSku(e.target.value)}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="Enter SKU"
+      />
+    </div>
+
+    <div>
+      <label
+        htmlFor="unit"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        Unit (e.g. pcs, kg)
+      </label>
+      <input
+        type="text"
+        id="unit"
+        name="unit"
+        value={unit}
+        onChange={(e) => setUnit(e.target.value)}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., pcs"
+      />
+    </div>
+  </div>
+</div>
+
+{/* Logistics & Return Policy */}
+<div className="mb-6">
+  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+    Logistics & Return Policy
+  </h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div>
+      <label
+        htmlFor="deliveryDays"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        Delivery Days
+      </label>
+      <input
+        type="number"
+        id="deliveryDays"
+        name="deliveryDays"
+        value={deliveryDays}
+        onChange={(e) => setDeliveryDays(Number(e.target.value))}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., 5"
+      />
+    </div>
+
+    <div>
+      <label
+        htmlFor="returnWindow"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        Return Window (days)
+      </label>
+      <input
+        type="number"
+        id="returnWindow"
+        name="returnWindow"
+        value={returnWindow}
+        onChange={(e) => setReturnWindow(Number(e.target.value))}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., 7"
+      />
+    </div>
+
+    <div>
+      <label
+        htmlFor="warrantyPeriod"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        Warranty Period (months)
+      </label>
+      <input
+        type="number"
+        id="warrantyPeriod"
+        name="warrantyPeriod"
+        value={warrantyPeriod}
+        onChange={(e) => setWarrantyPeriod(Number(e.target.value))}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., 12"
+      />
+    </div>
+
+    <div className="flex items-center mt-6">
+      <input
+        type="checkbox"
+        id="returnable"
+        name="returnable"
+        checked={returnable}
+        onChange={(e) => setReturnable(e.target.checked)}
+        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+      />
+      <label
+        htmlFor="returnable"
+        className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+      >
+        Returnable
+      </label>
+    </div>
+  </div>
+</div>
+
+{/* Tags & Keywords */}
+<div className="mb-6">
+  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+    SEO Tags & Keywords
+  </h3>
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Tags
+      </label>
+      <input
+        type="text"
+        value={tags.join(",")}
+        onChange={(e) => setTags(e.target.value.split(","))}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., organic, summer"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Keywords
+      </label>
+      <input
+        type="text"
+        value={keywords.join(",")}
+        onChange={(e) => setKeywords(e.target.value.split(","))}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+        placeholder="e.g., tshirt, cotton"
+      />
+    </div>
+  </div>
+</div>
+
+{/* Product Visibility & Status */}
+<div className="mb-6">
+  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+    Product Visibility & Status
+  </h3>
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+    {[ 
+      { label: "Enable Product", checked: isEnable, setter: setIsEnable },
+      { label: "Best Seller", checked: isBestSeller, setter: setIsBestSeller },
+      { label: "Featured", checked: isFeatured, setter: setIsFeatured },
+      { label: "Digital Product", checked: isDigital, setter: setIsDigital },
+    ].map(({ label, checked, setter }) => (
+      <div key={label} className="flex items-center mt-2">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => setter(e.target.checked)}
+          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+          id={label.replace(/\s+/g, '')}
+        />
+        <label
+          htmlFor={label.replace(/\s+/g, '')}
+          className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+        >
+          {label}
+        </label>
+      </div>
+    ))}
+
+    <div>
+      <label
+        htmlFor="visibility"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      >
+        Visibility
+      </label>
+      <select
+        id="visibility"
+        value={visibility}
+        onChange={(e) => setVisibility(e.target.value)}
+        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+      >
+        <option value="Public">Public</option>
+        <option value="Draft">Draft</option>
+        <option value="Private">Private</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+
 
               <div className="flex justify-between gap-4 flex-col md:flex-row">
                 <div className="w-full">

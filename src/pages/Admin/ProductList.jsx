@@ -55,9 +55,9 @@ const ProductList = () => {
         color: "",
         size: "",
         additionalPrice: 0,
-        images: [],
         countInStock: 0,
         sku: "",
+        images: [],
       },
     ],
     isEnable: true,
@@ -225,20 +225,9 @@ const validVariants = formData.variants?.filter((variant) => {
     });
 
     // Append variants only if there are any valid ones
-    if (validVariants && validVariants.length > 0) {
-      validVariants.forEach((variant, index) => {
-        Object.entries(variant).forEach(([key, value]) => {
-          if (key === "images" && Array.isArray(value)) {
-            value.forEach((img, i) => {
-              productData.append(`variants[${index}][images][${i}]`, img);
-            });
-          } else {
-            productData.append(`variants[${index}][${key}]`, value);
-          }
-        });
-      });
-    }
-
+if (validVariants && validVariants.length > 0) {
+  productData.append("variants", JSON.stringify(validVariants));
+}
       // Attributes
       formData.attributes.forEach((attr, index) => {
         productData.append(`attributes[${index}][key]`, attr.key || "");
@@ -454,16 +443,55 @@ const validVariants = formData.variants?.filter((variant) => {
 };
 
 
-const handleVariantImageChange = (index, e) => {
-  const files = Array.from(e.target.files); // FileList to array
+const handleVariantImageChange = async (index, e) => {
+  const files = Array.from(e.target.files);
 
-  setFormData(prev => {
+  if (files.length === 0) {
+    toast.error("Please select at least one image to upload.");
+    return;
+  }
+
+  const formDataData = new FormData();
+  files.forEach((file) => formDataData.append("images", file));
+
+  try {
+    const response = await uploadProductImage(formDataData).unwrap();
+
+    if (response?.images?.length) {
+      toast.success("Variant images uploaded successfully!");
+
+      setFormData((prevData) => {
+        const updatedVariants = [...prevData.variants];
+
+        updatedVariants[index] = {
+          ...updatedVariants[index],
+          images: [
+            ...(updatedVariants[index].images || []),
+            ...response.images,
+          ],
+        };
+
+        return {
+          ...prevData,
+          variants: updatedVariants,
+        };
+      });
+    } else {
+      toast.error("No images returned from the server.");
+    }
+  } catch (error) {
+    console.error("Upload Error:", error);
+    toast.error(error?.data?.message || "Error uploading images.");
+  }
+};
+
+const handleRemoveVariantImage = (variantIndex, imageIndex) => {
+  setFormData((prev) => {
     const updatedVariants = [...prev.variants];
-    // Replace or append files as per your logic (here replacing)
-    updatedVariants[index] = {
-      ...updatedVariants[index],
-      images: files,
-    };
+    const updatedImages = [...updatedVariants[variantIndex].images];
+    updatedImages.splice(imageIndex, 1); // Remove the image at that index
+    updatedVariants[variantIndex].images = updatedImages;
+
     return { ...prev, variants: updatedVariants };
   });
 };
@@ -980,31 +1008,43 @@ const handleVariantImageChange = (index, e) => {
         >
           Upload Images
         </label>
-        <input
-          type="file"
-          id={`images-${index}`}
-          multiple
-          accept="image/*"
-          onChange={(e) => handleVariantImageChange(index, e)}
-          className="block w-full text-sm text-gray-500
-                     file:mr-4 file:py-2 file:px-4
-                     file:rounded-md file:border-0
-                     file:text-sm file:font-semibold
-                     file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100
-                     dark:file:bg-gray-700 dark:file:text-gray-300"
+<input
+  type="file"
+  id={`images-${index}`}
+  multiple
+  accept="image/*"
+  onChange={(e) => handleVariantImageChange(index, e)}
+  className="block w-full text-sm text-gray-500
+             file:mr-4 file:py-2 file:px-4
+             file:rounded-md file:border-0
+             file:text-sm file:font-semibold
+             file:bg-blue-50 file:text-blue-700
+             hover:file:bg-blue-100
+             dark:file:bg-gray-700 dark:file:text-gray-300"
+/>
+
+{/* Preview thumbnails */}
+<div className="flex flex-wrap mt-2 gap-2">
+  {variant.images && variant.images.length > 0 &&
+    variant.images.map((img, i) => (
+      <div key={i} className="relative group">
+        <img
+          src={typeof img === "string" ? img : URL.createObjectURL(img)}
+          alt={`Variant ${index + 1} Image ${i + 1}`}
+          className="h-16 w-16 object-cover rounded-md border border-gray-300"
         />
-        {/* Preview thumbnails */}
-        <div className="flex flex-wrap mt-2 gap-2">
-          {variant.images && variant.images.length > 0 && variant.images.map((img, i) => (
-            <img
-              key={i}
-              src={typeof img === "string" ? img : URL.createObjectURL(img)}
-              alt={`Variant ${index + 1} Image ${i + 1}`}
-              className="h-16 w-16 object-cover rounded-md border border-gray-300"
-            />
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => handleRemoveVariantImage(index, i)}
+          className="absolute top-[-6px] right-[-6px] bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-80 hover:opacity-100"
+          title="Remove"
+        >
+          ×
+        </button>
+      </div>
+    ))}
+</div>
+
       </div>
                       </div>
                     </div>
