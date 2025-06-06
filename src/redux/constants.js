@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:3500";
+// export const BASE_URL = "http://localhost:3500";
 // export const DASHBOARD_ID = "67bd87fc6d93e61b755b7f72"
 // export const DASHBOARD_ID = "67bd85e16d93e61b755b7f3c"
 
@@ -9,7 +9,7 @@ export const DASHBOARD_ID = "681e0f515525805fc96095d0"
 
 
 // export const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-// export const BASE_URL = "https://super-canteen-backend.onrender.com"
+export const BASE_URL = "https://super-canteen-backend.onrender.com"
 
 
 export const USERS_URL = "/api/users";
