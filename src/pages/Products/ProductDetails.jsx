@@ -40,6 +40,10 @@ const ProductDetails = () => {
   const [selectedSlab, setSelectedSlab] = useState(null);
   const [requestSlab] = useRequestSlabMutation();
   const [saveSlabSelection] = useSaveSlabSelectionMutation();
+  const [selectedVariant, setSelectedVariant] = useState(null);
+const [displayImages, setDisplayImages] = useState([]);
+
+
   // Add state to track which quantity method the user prefers
   const [quantityMethod, setQuantityMethod] = useState("manual"); // Options: "manual", "slab"
 
@@ -119,54 +123,60 @@ const ProductDetails = () => {
   //   }
   // };
 
-  const addToCartHandler = async () => {
-    const hasSlabs = product.slabs && product.slabs.length > 0;
-    let qtyToSave;
-    let price;
+const addToCartHandler = async () => {
+  const hasSlabs = product.slabs && product.slabs.length > 0;
+  let qtyToSave;
+  let basePrice;
 
-    if (quantityMethod === "manual") {
-      qtyToSave = qty;
-      price = product.offerPrice;
-    } else if (quantityMethod === "slab") {
-      if (isCustomQty) {
-        qtyToSave = parseInt(customQty, 10);
-        price = product.offerPrice;
-      } else if (selectedSlab) {
-        qtyToSave = selectedQuantities[selectedSlab._id];
-        price = selectedSlab.price;
-      } else {
-        toast.warn("Please select a slab or enable custom quantity.");
-        return;
-      }
-    }
-
-    if (!qtyToSave || qtyToSave <= 0) {
-      toast.error("Invalid quantity selected.");
+  if (quantityMethod === "manual") {
+    qtyToSave = qty;
+    basePrice = product.offerPrice;
+  } else if (quantityMethod === "slab") {
+    if (isCustomQty) {
+      qtyToSave = parseInt(customQty, 10);
+      basePrice = product.offerPrice;
+    } else if (selectedSlab) {
+      qtyToSave = selectedQuantities[selectedSlab._id];
+      basePrice = selectedSlab.price;
+    } else {
+      toast.warn("Please select a slab or enable custom quantity.");
       return;
     }
+  }
 
-    // Show coupon code if available
-    if (product.coupons && product.coupons.length > 0) {
-      const firstCoupon = product.coupons[0]; // Show the first coupon code
-      toast.info( `🎉 Special Offer! This product has a coupon: ${firstCoupon.name} — Get ${firstCoupon.percentage}% OFF!`,);
-    }
+  if (!qtyToSave || qtyToSave <= 0) {
+    toast.error("Invalid quantity selected.");
+    return;
+  }
 
-    try {
-      const payload = {
-        productId: productId,
-        slabId: quantityMethod === "slab" ? selectedSlab?._id || null : null,
-        userId: userInfo._id,
-        qty: qtyToSave,
-        price: price,
-      };
+  // Calculate price including variant's additional price if any
+  const additionalPrice = selectedVariant?.additionalPrice || 0;
+  const finalPrice = basePrice + additionalPrice;
 
-      await saveSlabSelection(payload).unwrap();
-      toast.success("Item added to cart successfully");
-      navigate("/cart");
-    } catch (error) {
-      toast.error(error?.data?.message || "Failed to add item to cart");
-    }
-  };
+  // Show coupon code if available
+  if (product.coupons && product.coupons.length > 0) {
+    const firstCoupon = product.coupons[0]; // Show the first coupon code
+    toast.info(
+      `🎉 Special Offer! This product has a coupon: ${firstCoupon.name} — Get ${firstCoupon.percentage}% OFF!`
+    );
+  }
+
+  try {
+    const payload = {
+      productId: productId,
+      slabId: quantityMethod === "slab" ? selectedSlab?._id || null : null,
+      userId: userInfo._id,
+      qty: qtyToSave,
+      price: finalPrice,
+    };
+
+    await saveSlabSelection(payload).unwrap();
+    toast.success("Item added to cart successfully");
+    navigate("/cart");
+  } catch (error) {
+    toast.error(error?.data?.message || "Failed to add item to cart");
+  }
+};
 
   const handleCustomQtyRequest = async () => {
     try {
@@ -233,6 +243,9 @@ const ProductDetails = () => {
           : newQuantities;
       });
     }
+      if (product?.images) {
+    setDisplayImages(product.images);
+  }
   }, [product]);
 
   useEffect(() => {
@@ -280,6 +293,39 @@ const ProductDetails = () => {
     }
   }, [userInfo, productId, addProductClick]);
 
+
+  //variant select
+const handleVariantSelect = (variant) => {
+  if (selectedVariant?._id === variant._id) {
+    // If clicked variant is already selected, unselect it
+    setSelectedVariant(null);
+    setDisplayImages(product.images); // fallback to default images
+  } else {
+    setSelectedVariant(variant);
+
+    // Show variant images if available, else product images
+    if (variant.images && variant.images.length > 0) {
+      setDisplayImages(variant.images);
+    } else {
+      setDisplayImages(product.images);
+    }
+  }
+};
+
+
+//final Price after variant selection
+const finalPrice = selectedVariant
+  ? product.offerPrice + (selectedVariant.additionalPrice || 0)
+  : product.offerPrice;
+
+const finalMrp = selectedVariant
+  ? product.mrp + (selectedVariant.additionalPrice || 0)
+  : product.mrp;
+
+const discountPercent = finalMrp
+  ? Math.round(((finalMrp - finalPrice) / finalMrp) * 100)
+  : 0;
+
   useEffect(() => {
     trackProductClick();
   }, [trackProductClick]);
@@ -316,21 +362,18 @@ const ProductDetails = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* Product Images */}
               <div className="relative rounded-xl overflow-hidden shadow-lg bg-white dark:bg-gray-800">
-                <Slider {...settings} className="product-slider">
-                  {product.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className="relative w-full"
-                      style={{ aspectRatio: "4 / 5" }}
-                    >
-                      <img
-                        src={`${BASE_URL}${image}`}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover transition duration-500 hover:scale-105"
-                      />
-                    </div>
-                  ))}
-                </Slider>
+<Slider {...settings} className="product-slider">
+  {displayImages.map((image, index) => (
+    <div key={index} className="relative w-full" style={{ aspectRatio: "4 / 5" }}>
+      <img
+        src={`${BASE_URL}${image}`}
+        alt={`${product.name} ${index + 1}`}
+        className="w-full h-full object-cover transition duration-500 hover:scale-105"
+      />
+    </div>
+  ))}
+</Slider>
+
                 <div className="absolute top-4 right-4 z-10">
                   <HeartIcon product={product} />
                 </div>
@@ -349,20 +392,17 @@ const ProductDetails = () => {
                   </span>
                 </div> */}
 
-                <div className="flex items-baseline space-x-4">
-                  <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                    ₹{product.offerPrice}
-                  </span>
-                  <span className="line-through text-xl text-gray-400 dark:text-gray-500">
-                    ₹{product.mrp}
-                  </span>
-                  <span className="px-2 py-1 text-sm font-semibold text-white bg-green-500 rounded-md">
-                    {Math.round(
-                      ((product.mrp - product.offerPrice) / product.mrp) * 100
-                    )}
-                    % OFF
-                  </span>
-                </div>
+<div className="flex items-baseline space-x-4">
+  <span className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">
+    ₹{finalPrice}
+  </span>
+  <span className="line-through text-xl text-gray-400 dark:text-gray-500">
+    ₹{finalMrp}
+  </span>
+  <span className="px-2 py-1 text-sm font-semibold text-white bg-green-500 rounded-md">
+    {discountPercent}% OFF
+  </span>
+</div>
 
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   {stripHtml(product.description)}
@@ -391,6 +431,39 @@ const ProductDetails = () => {
                     </span>
                   </div>
                 </div>
+
+  {/* Variant Selection */}
+  {product.variants && product.variants.length > 0 && (
+    <div className="variant-selection mb-6">
+      <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        Select Variant:
+      </h4>
+      <div style={{ display: "flex", gap: "10px" }}>
+        {product.variants.map((variant) => (
+          <button
+            key={variant._id}
+            onClick={() => handleVariantSelect(variant)}
+            style={{
+              padding: "5px 10px",
+              border:
+                selectedVariant?._id === variant._id
+                  ? "2px solid purple"
+                  : "1px solid gray",
+              backgroundColor:
+                selectedVariant?._id === variant._id ? "#f0e" : "#fff",
+              cursor: "pointer",
+              opacity: variant.countInStock === 0 ? 0.5 : 1,
+            }}
+            disabled={variant.countInStock === 0}
+            title={`Color: ${variant.color}, Size: ${variant.size}`}
+          >
+            {variant.color} / {variant.size}{" "}
+            {variant.countInStock === 0 && "(Out of stock)"}
+          </button>
+        ))}
+      </div>
+    </div>
+  )}
 
                 {!isSeller && product.countInStock > 0 && hasSlabs && (
                   <div className="mb-4">
